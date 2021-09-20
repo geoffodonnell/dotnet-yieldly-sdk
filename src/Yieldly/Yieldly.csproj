@@ -4,4 +4,19 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Patch\langspec.json" />
+    <None Remove="V1\asc.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Patch\langspec.json" />
+    <EmbeddedResource Include="V1\asc.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Algorand" Version="0.2.0.7" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
 </Project>
