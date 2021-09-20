@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Yieldly {
+namespace Yieldly.V1 {
 
 	public class Constant {
 

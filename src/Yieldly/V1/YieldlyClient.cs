@@ -21,7 +21,6 @@ namespace Yieldly.V1 {
 			mStakingAppId = stakingAppId;
 		}
 
-
 		public virtual ulong FetchYieldlyAmountStaked(Address address) {
 
 			var stakingAppId = (long)mStakingAppId;

@@ -12,7 +12,7 @@ namespace Yieldly.V1 {
 
 		// https://yieldly.finance/security/
 		public const ulong StakingAppId = 233725850;
-
+		public const ulong ProxyAppId = 233725848;
 
 		private const string mResourceFileName = "Yieldly.V1.asc.json";
 
