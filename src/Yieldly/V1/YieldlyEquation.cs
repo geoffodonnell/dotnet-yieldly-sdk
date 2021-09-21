@@ -32,7 +32,7 @@ namespace Yieldly.V1 {
 			var ua = stakingAppLocalState.GetUserAmountValue();
 			var ut = stakingAppLocalState.GetUserTimeValue();
 
-			var time = BigInteger.Multiply((gt.Value - ut.Value) / 86400, ua.Value);
+			var time = BigInteger.Multiply((ulong)((double)(gt.Value - ut.Value) / 86400), ua.Value);
 			var share = (double)(uss.Value + time) / (double)gss.Value;
 			var claimableAlgo = share * tap.GetValueOrDefault();
 			var claimableYieldly = share * tyul.GetValueOrDefault();

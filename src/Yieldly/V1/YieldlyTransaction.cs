@@ -11,7 +11,47 @@ namespace Yieldly.V1 {
 
 	public static class YieldlyTransaction {
 
-		public static TransactionGroup PrepareNoLossLottertyClaimTransactions(
+		public static TransactionGroup PrepareNoLossLotteryDepositTransactions(			
+			ulong algoAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// TODO
+
+			return null;
+		}
+
+		public static TransactionGroup PrepareYieldyStakingDepositTransactions(
+			ulong yieldlyAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// TODO
+
+			return null;
+		}
+
+		public static TransactionGroup PrepareNoLossLotteryWithdrawTransactions(
+			ulong algoAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// TODO
+
+			return null;
+		}
+
+		public static TransactionGroup PrepareYieldyStakingWithdrawTransactions(
+			ulong yieldlyAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// TODO
+
+			return null;
+		}
+
+		public static TransactionGroup PrepareNoLossLottertyClaimRewardTransactions(
 			ulong yeildlyAmount,
 			Address sender,
 			TransactionParametersResponse txParams) {
@@ -61,7 +101,7 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
-		public static TransactionGroup PrepareStakingClaimTransactions(
+		public static TransactionGroup PrepareYieldlyStakingClaimRewardTransactions(
 			ulong algoAmount,
 			ulong yeildlyAmount,
 			Address sender,

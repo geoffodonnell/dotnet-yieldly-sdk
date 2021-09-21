@@ -6,6 +6,7 @@ namespace Yieldly.V1 {
 
 		public const string AlgodMainnetHost = "https://api.algoexplorer.io";
 
+		// https://yieldly.finance/security/
 		// https://algoexplorer.io/asset/226701642
 		public const ulong YieldlyAssetId = 226701642;
 

@@ -1,19 +1,16 @@
 ﻿using Algorand;
 using Algorand.V2;
 using Algorand.V2.Model;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using Yieldly.V1.Model;
-using Account = Algorand.V2.Model.Account;
 
 namespace Yieldly.V1 {
 
 	public class YieldlyClient {
 
 		private readonly AlgodApi mAlgodApi;
+
+		internal AlgodApi AlgodApi { get => mAlgodApi; }
 
 		public YieldlyClient(
 			AlgodApi algodApi) {
