@@ -8,6 +8,12 @@ namespace Yieldly.V1 {
 
 		// https://algoexplorer.io/asset/226701642
 		public const ulong YieldlyAssetId = 226701642;
+
+		// https://yieldly.finance/security/
+		public const ulong NoLossLotteryAppId = 233725844;
+		public const ulong StakingAppId = 233725850;
+		public const ulong ProxyAppId = 233725848;
+
 	}
 
 }

@@ -35,49 +35,49 @@ namespace Yieldly.V1 {
 
 		public static ulong? GetGlobalTimeValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, GlobalTimeKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, GlobalTimeKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetGlobalStakingSharesValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, GlobalStakingSharesKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, GlobalStakingSharesKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetTotalClaimableYieldlyValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableYieldlyKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableYieldlyKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetTotalClaimableAlgoValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAlgoKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAlgoKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetUserStakingShareValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, UserStakingSharesKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, UserStakingSharesKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetUserAmountValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, UserAmountKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, UserAmountKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
 		public static ulong? GetUserTimeValue(this TealKeyValueStore values) {
 			return values
-				.FirstOrDefault(s => String.Equals(s.Key, UserTimeKey))?
+				.FirstOrDefault(s => String.Equals(s.Key, UserTimeKey, mCmp))?
 				.Value?
 				.Uint;
 		}
