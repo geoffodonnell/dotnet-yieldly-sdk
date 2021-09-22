@@ -12,7 +12,7 @@ namespace Yieldly.V1 {
 
 		private const string mResourceFileName = "Yieldly.V1.asc.json";
 
-		private const string mNoLossLotteryAppName = "no_loss_lottery_app";
+		private const string mLotteryAppName = "no_loss_lottery_app";
 		private const string mStakingAppName = "staking_app";
 		private const string mOptingAppName = "opting_app";
 		private const string mTrackerAppName = "tracker_app";
@@ -32,7 +32,7 @@ namespace Yieldly.V1 {
 
 		private static ContractCollection mContracts;
 
-		private static AppContract mNoLossLotteryApp;
+		private static AppContract mLotteryApp;
 		private static AppContract mStakingApp;
 		private static AppContract mOptingApp;
 		private static AppContract mTrackerApp;
@@ -98,7 +98,7 @@ namespace Yieldly.V1 {
 
 			stream.Dispose();
 #if DEBUG
-			mNoLossLotteryApp = mContracts.Contracts[mNoLossLotteryAppName] as AppContract;
+			mLotteryApp = mContracts.Contracts[mLotteryAppName] as AppContract;
 			mStakingApp = mContracts.Contracts[mStakingAppName] as AppContract;
 			mOptingApp = mContracts.Contracts[mOptingAppName] as AppContract;
 			mTrackerApp = mContracts.Contracts[mTrackerAppName] as AppContract;

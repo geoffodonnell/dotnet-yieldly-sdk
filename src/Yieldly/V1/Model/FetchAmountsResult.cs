@@ -2,11 +2,11 @@
 
 	public class FetchAmountsResult {
 
-		public RewardAmounts NoLossLotteryReward { get; set; }
+		public RewardAmounts LotteryReward { get; set; }
 
 		public RewardAmounts StakingReward { get; set; }
 
-		public ulong AlgoInNoLossLottery { get; set; }
+		public ulong AlgoInLottery { get; set; }
 
 		public ulong YieldlyStaked { get; set; }
 

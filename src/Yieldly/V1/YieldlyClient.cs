@@ -30,17 +30,17 @@ namespace Yieldly.V1 {
 			return transactionGroup.Submit(mAlgodApi, wait);
 		}
 
-		public virtual FetchAmountsResult FetchYieldlyAmounts(Address address) {
+		public virtual FetchAmountsResult FetchAmounts(Address address) {
 
 			var accountInfo = mAlgodApi.AccountInformation(address.EncodeAsString());
-			var noLossLotteryApp = mAlgodApi.GetApplicationByID((long)Constant.NoLossLotteryAppId);
+			var LotteryApp = mAlgodApi.GetApplicationByID((long)Constant.LotteryAppId);
 			var stakingApp = mAlgodApi.GetApplicationByID((long)Constant.StakingAppId);
 
-			var noLossLotteryReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, noLossLotteryApp);
+			var LotteryReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, LotteryApp);
 			var stakingReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, stakingApp);
-			var algoInNoLossLottery = accountInfo?
+			var algoInLottery = accountInfo?
 				.AppsLocalState?
-				.FirstOrDefault(s => s.Id == noLossLotteryApp.Id)?
+				.FirstOrDefault(s => s.Id == LotteryApp.Id)?
 				.KeyValue?
 				.GetUserAmountValue();
 			var yieldlyStaked = accountInfo?
@@ -51,9 +51,9 @@ namespace Yieldly.V1 {
 				.GetValueOrDefault();
 
 			return new FetchAmountsResult { 
-				NoLossLotteryReward = noLossLotteryReward,
+				LotteryReward = LotteryReward,
 				StakingReward = stakingReward,
-				AlgoInNoLossLottery = algoInNoLossLottery.GetValueOrDefault(),
+				AlgoInLottery = algoInLottery.GetValueOrDefault(),
 				YieldlyStaked = yieldlyStaked.GetValueOrDefault()
 			};
 		}
