@@ -15,6 +15,7 @@ namespace Yieldly.V1 {
 
 	public static class YieldlyTransaction {
 
+		#region Opt In/Out
 		public static TransactionGroup PrepareOptInTransactions(
 			Address sender,
 			TransactionParametersResponse txParams,
@@ -81,41 +82,81 @@ namespace Yieldly.V1 {
 
 			return new TransactionGroup(transactions);
 		}
+		#endregion
 
-		#region No Loss Lottery Transactions
+		#region Lottery Transactions
 		public static TransactionGroup PrepareLotteryDepositTransactions(			
+			ulong algoAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			var escrowAddress = Contract.EscrowLogicsigSignature.Address;
+			var transactions = new List<Transaction>();
+
+			// Call Proxy App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.ProxyAppId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call No Loss Lottery App w/ arg D
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.LotteryAppId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("D"));
+
+			transactions.Add(callTx2);
+
+			// Deposit
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, algoAmount, null, txParams));
+
+			return new TransactionGroup(transactions);
+		}
+
+		public static TransactionGroup PrepareLotteryWithdrawTransactions(
 			ulong algoAmount,
 			Address sender,
 			TransactionParametersResponse txParams) {
 
 			var escrowSignature = Contract.EscrowLogicsigSignature;
 			var escrowAddress = escrowSignature.Address;
-
 			var transactions = new List<Transaction>();
 
-			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, algoAmount, null, txParams));
-
-			// Call No Loss Lottery App w/ arg D
+			// Call Proxy App w/ arg check
 			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
+				sender, Constant.ProxyAppId, txParams);
 
 			callTx1.onCompletion = OnCompletion.Noop;
 			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("D"));
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
 
 			transactions.Add(callTx1);
 
-			// Call Proxy App w/ arg check
+			// Call No Loss Lottery App w/ arg W
 			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
+				sender, Constant.LotteryAppId, txParams);
 
 			callTx2.onCompletion = OnCompletion.Noop;
 			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
+			callTx2.accounts.Add(escrowAddress);
 
 			transactions.Add(callTx2);
+
+			// Withdrawl
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					escrowAddress, sender, algoAmount, null, txParams));
+
+			// Payment
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, 1000, null, txParams));
 
 			var result = new TransactionGroup(transactions);
 
@@ -124,17 +165,7 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
-		public static TransactionGroup PrepareLotteryWithdrawTransactions(
-			ulong algoAmount,
-			Address sender,
-			TransactionParametersResponse txParams) {
-
-			// TODO
-
-			return null;
-		}
-
-		public static TransactionGroup PrepareNoLossLottertyClaimRewardTransactions(
+		public static TransactionGroup PrepareLotteryClaimRewardTransactions(
 			ulong algoAmount,
 			ulong yieldlyAmount,
 			Address sender,

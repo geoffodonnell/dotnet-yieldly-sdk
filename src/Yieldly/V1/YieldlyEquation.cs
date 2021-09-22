@@ -23,19 +23,19 @@ namespace Yieldly.V1 {
 				return null;
 			}
 
-			var gt = stakingAppGlobalState.GetGlobalTimeValue();
-			var gss = stakingAppGlobalState.GetGlobalStakingSharesValue();
-			var tyul = stakingAppGlobalState.GetTotalClaimableYieldlyValue();
-			var tap = stakingAppGlobalState.GetTotalClaimableAlgoValue();
+			var gt = stakingAppGlobalState.GetGlobalTimeValue().GetValueOrDefault();
+			var gss = stakingAppGlobalState.GetGlobalStakingSharesValue().GetValueOrDefault();
+			var tyul = stakingAppGlobalState.GetTotalClaimableYieldlyValue().GetValueOrDefault();
+			var tap = stakingAppGlobalState.GetTotalClaimableAlgoValue().GetValueOrDefault();
 
-			var uss = stakingAppLocalState.GetUserStakingShareValue();
-			var ua = stakingAppLocalState.GetUserAmountValue();
-			var ut = stakingAppLocalState.GetUserTimeValue();
+			var uss = stakingAppLocalState.GetUserStakingShareValue().GetValueOrDefault();
+			var ua = stakingAppLocalState.GetUserAmountValue().GetValueOrDefault();
+			var ut = stakingAppLocalState.GetUserTimeValue().GetValueOrDefault();
 
-			var time = BigInteger.Multiply((ulong)((double)(gt.Value - ut.Value) / 86400), ua.Value);
-			var share = (double)(uss.Value + time) / (double)gss.Value;
-			var claimableAlgo = share * tap.GetValueOrDefault();
-			var claimableYieldly = share * tyul.GetValueOrDefault();
+			var time = BigInteger.Multiply((ulong)((double)(gt - ut) / 86400), ua);
+			var share = (double)(uss + time) / (double)gss;
+			var claimableAlgo = share * tap;
+			var claimableYieldly = share * tyul;
 
 			return new RewardAmounts {
 				Algo = (ulong)claimableAlgo,
