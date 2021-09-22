@@ -1,5 +1,5 @@
 # dotnet-yieldly-sdk
-[![Donate Algo](https://img.shields.io/badge/Donate-ALGO-lightblue.svg?style=flat-square)](https://algoexplorer.io/address/LXTZVDXEIXAC3GDMLEJNDSEWJHROEHLSWMIJTGVJS4FVQCAF7QOKP7AO2A)
+[![Donate Algo](https://img.shields.io/badge/Donate-ALGO-000000.svg?style=flat)](https://algoexplorer.io/address/LXTZVDXEIXAC3GDMLEJNDSEWJHROEHLSWMIJTGVJS4FVQCAF7QOKP7AO2A)
 
 Yieldly .NET SDK
 
