@@ -268,9 +268,48 @@ namespace Yieldly.V1 {
 			Address sender,
 			TransactionParametersResponse txParams) {
 
-			// TODO
+			var escrowSignature = Contract.EscrowLogicsigSignature;
+			var escrowAddress = escrowSignature.Address;
+			var transactions = new List<Transaction>();
 
-			return null;
+			// Call Proxy App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.ProxyAppId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call Staking App w/ arg W
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.StakingAppId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
+			callTx2.accounts.Add(escrowAddress);
+
+			transactions.Add(callTx2);
+
+			// Withdraw Yieldly from Escrow address
+			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+				escrowAddress,
+				sender,
+				(long)Constant.YieldlyAssetId,
+				yieldlyAmount,
+				txParams));
+
+			// Payment
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, 1000, null, txParams));
+
+			var result = new TransactionGroup(transactions);
+
+			result.SignWithLogicSig(escrowSignature);
+
+			return result;
 		}
 
 		public static TransactionGroup PrepareYieldlyStakingClaimRewardTransactions(
