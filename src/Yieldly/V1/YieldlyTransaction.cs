@@ -228,6 +228,26 @@ namespace Yieldly.V1 {
 
 			var transactions = new List<Transaction>();
 
+			// Call Proxy App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.ProxyAppId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call Staking App w/ arg S
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.StakingAppId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("S"));
+
+			transactions.Add(callTx2);
+
 			// Send Yieldly to Escrow address
 			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
 				sender,
@@ -235,26 +255,6 @@ namespace Yieldly.V1 {
 				(long)Constant.YieldlyAssetId,
 				yieldlyAmount,
 				txParams));
-
-			// Call Staking App w/ arg S
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("S"));
-
-			transactions.Add(callTx1);
-
-			// Call Proxy App w/ arg check
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
-
-			transactions.Add(callTx2);
 
 			var result = new TransactionGroup(transactions);
 
