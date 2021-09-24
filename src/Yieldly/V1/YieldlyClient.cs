@@ -33,14 +33,14 @@ namespace Yieldly.V1 {
 		public virtual FetchAmountsResult FetchAmounts(Address address) {
 
 			var accountInfo = mAlgodApi.AccountInformation(address.EncodeAsString());
-			var LotteryApp = mAlgodApi.GetApplicationByID((long)Constant.LotteryAppId);
+			var lotteryApp = mAlgodApi.GetApplicationByID((long)Constant.LotteryAppId);
 			var stakingApp = mAlgodApi.GetApplicationByID((long)Constant.StakingAppId);
 
-			var LotteryReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, LotteryApp);
+			var lotteryReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, lotteryApp);
 			var stakingReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, stakingApp);
 			var algoInLottery = accountInfo?
 				.AppsLocalState?
-				.FirstOrDefault(s => s.Id == LotteryApp.Id)?
+				.FirstOrDefault(s => s.Id == lotteryApp.Id)?
 				.KeyValue?
 				.GetUserAmountValue();
 			var yieldlyStaked = accountInfo?
@@ -51,7 +51,7 @@ namespace Yieldly.V1 {
 				.GetValueOrDefault();
 
 			return new FetchAmountsResult { 
-				LotteryReward = LotteryReward,
+				LotteryReward = lotteryReward,
 				StakingReward = stakingReward,
 				AlgoInLottery = algoInLottery.GetValueOrDefault(),
 				YieldlyStaked = yieldlyStaked.GetValueOrDefault()

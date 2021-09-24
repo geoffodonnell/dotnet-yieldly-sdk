@@ -9,10 +9,6 @@ using Transaction = Algorand.Transaction;
 
 namespace Yieldly.V1 {
 
-	// Doesn't include transactions for claiming lottery winnings
-	// This tx group looks like a claim: https://algoexplorer.io/tx/group/dEKgy0JxE%2FzwAd2ySLkU2nucXC2ALlxLlhoGYzrXl5o%3D
-	// Would need to sort out the calculation for winning amount
-
 	public static class YieldlyTransaction {
 
 		#region Opt In/Out
@@ -166,7 +162,6 @@ namespace Yieldly.V1 {
 		}
 
 		public static TransactionGroup PrepareLotteryClaimRewardTransactions(
-			ulong algoAmount,
 			ulong yieldlyAmount,
 			Address sender,
 			TransactionParametersResponse txParams) {
@@ -176,9 +171,26 @@ namespace Yieldly.V1 {
 
 			var transactions = new List<Transaction>();
 
-			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 1000, null, txParams));
+			// Call Proxy App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.ProxyAppId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call No Loss Lottery App w/ arg CA
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.LotteryAppId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
+			callTx2.accounts.Add(escrowAddress);
+
+			transactions.Add(callTx2);
 
 			// Claim Yieldly from Yieldly Staking
 			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
@@ -188,26 +200,9 @@ namespace Yieldly.V1 {
 				yieldlyAmount,
 				txParams));
 
-			// Call No Loss Lottery App w/ arg CA
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
-			callTx1.accounts.Add(escrowAddress);
-
-			transactions.Add(callTx1);
-
-			// Call Proxy App w/ arg check
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
-
-			transactions.Add(callTx2);
+			// Payment
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, 1000, null, txParams));
 
 			var result = new TransactionGroup(transactions);
 
@@ -215,6 +210,56 @@ namespace Yieldly.V1 {
 
 			return result;
 		}
+
+		public static TransactionGroup PrepareLotteryClaimWinningTransactions(
+			ulong algoAmount,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// This tx group looks like a claim:
+			//	https://algoexplorer.io/tx/group/dEKgy0JxE%2FzwAd2ySLkU2nucXC2ALlxLlhoGYzrXl5o%3D
+
+			var escrowSignature = Contract.EscrowLogicsigSignature;
+			var escrowAddress = escrowSignature.Address;
+
+			var transactions = new List<Transaction>();
+
+			// Call Proxy App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.ProxyAppId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call No Loss Lottery App w/ arg W
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, Constant.LotteryAppId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
+			callTx2.accounts.Add(escrowAddress);
+
+			transactions.Add(callTx2);
+
+			// Claim Algo from Lottery
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					escrowAddress, sender, algoAmount, null, txParams));
+
+			// Payment
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, 1000, null, txParams));
+
+			var result = new TransactionGroup(transactions);
+
+			result.SignWithLogicSig(escrowSignature);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Yieldly Staking
@@ -323,30 +368,13 @@ namespace Yieldly.V1 {
 
 			var transactions = new List<Transaction>();
 
-			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 2000, null, txParams));
-
-			// Claim Algo from Yieldly Staking
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-				escrowAddress, sender, algoAmount, null, txParams));
-
-			// Claim Yieldly from Yieldly Staking
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
-				escrowAddress,
-				sender,
-				(long)Constant.YieldlyAssetId,
-				yieldlyAmount,
-				txParams));
-
-			// Call Staking App w/ arg CAL
+			// Call Proxy App w/ arg check
 			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
+				sender, Constant.ProxyAppId, txParams);
 
 			callTx1.onCompletion = OnCompletion.Noop;
 			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("CAL"));
-			callTx1.accounts.Add(escrowAddress);
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
 
 			transactions.Add(callTx1);
 
@@ -361,15 +389,32 @@ namespace Yieldly.V1 {
 
 			transactions.Add(callTx2);
 
-			// Call Proxy App w/ arg check
+			// Call Staking App w/ arg CAL
 			var callTx3 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
+				sender, Constant.StakingAppId, txParams);
 
 			callTx3.onCompletion = OnCompletion.Noop;
 			callTx3.applicationArgs = new List<byte[]>();
-			callTx3.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			callTx3.applicationArgs.Add(Strings.ToUtf8ByteArray("CAL"));
+			callTx3.accounts.Add(escrowAddress);
 
 			transactions.Add(callTx3);
+
+			// Claim Yieldly from Yieldly Staking
+			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+				escrowAddress,
+				sender,
+				(long)Constant.YieldlyAssetId,
+				yieldlyAmount,
+				txParams));
+
+			// Claim Algo from Yieldly Staking
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+				escrowAddress, sender, algoAmount, null, txParams));
+
+			// Payment
+			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+					sender, escrowAddress, 2000, null, txParams));
 
 			var result = new TransactionGroup(transactions);
 

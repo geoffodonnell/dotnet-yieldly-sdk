@@ -2,6 +2,7 @@
 using Algorand.V2.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Yieldly.V1.Model;
 using Account = Algorand.Account;
@@ -37,7 +38,22 @@ namespace Yieldly.V1 {
 			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
-			bool includeLotteryContract = true) {
+			bool includeLotteryContract = true,
+			bool checkAssetBalance = true) {
+
+			var yieldlyAssetId = (long)Constant.YieldlyAssetId;
+
+			if (checkAssetBalance) {
+				var accountInfo = client.AlgodApi
+					.AccountInformation(account.Address.EncodeAsString());
+
+				var assetInfo = accountInfo.Assets
+					.FirstOrDefault(s => s.AssetId.GetValueOrDefault() == yieldlyAssetId);
+
+				if (assetInfo?.Amount.GetValueOrDefault() > 0) {
+					throw new Exception("Attempting Yieldly ASA opt-out with non-zero balance.");
+				}
+			}
 
 			var txs = PrepareOptOutTransactions(
 				client,
@@ -81,10 +97,23 @@ namespace Yieldly.V1 {
 		public static PostTransactionsResponse LotteryClaimReward(
 			this YieldlyClient client,
 			Account account,
-			RewardAmounts amounts) {
+			ulong yieldlyAmount) {
 
 			var txs = PrepareLotteryClaimRewardTransactions(
-				client, account.Address, amounts);
+				client, account.Address, yieldlyAmount);
+
+			txs.Sign(account);
+
+			return client.Submit(txs, true);
+		}
+
+		public static PostTransactionsResponse LotteryClaimWinning(
+			this YieldlyClient client,
+			Account account,
+			ulong algoAmount) {
+
+			var txs = PrepareLotteryClaimWinningTransactions(
+				client, account.Address, algoAmount);
 
 			txs.Sign(account);
 
@@ -207,13 +236,27 @@ namespace Yieldly.V1 {
 		public static TransactionGroup PrepareLotteryClaimRewardTransactions(
 			this YieldlyClient client,
 			Address sender,
-			RewardAmounts amounts) {
+			ulong yieldlyAmount) {
 
 			var txParams = client.AlgodApi.TransactionParams();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryClaimRewardTransactions(
-					amounts.Algo, amounts.Yieldly, sender, txParams);
+					yieldlyAmount, sender, txParams);
+
+			return result;
+		}
+
+		public static TransactionGroup PrepareLotteryClaimWinningTransactions(
+			this YieldlyClient client,
+			Address sender,
+			ulong algoAmount) {
+
+			var txParams = client.AlgodApi.TransactionParams();
+
+			var result = YieldlyTransaction
+				.PrepareLotteryClaimWinningTransactions(
+					algoAmount, sender, txParams);
 
 			return result;
 		}
