@@ -1,5 +1,6 @@
 # dotnet-yieldly-sdk
 [![Dev CI Status](https://dev.azure.com/gbo-devops/github-pipelines/_apis/build/status/Yieldly/Yieldly%20Dev%20CI?branchName=develop)](https://dev.azure.com/gbo-devops/github-pipelines/_build/latest?definitionId=4&branchName=develop)
+[![NuGet version](https://badge.fury.io/nu/yieldly.svg)](https://badge.fury.io/nu/yieldly)
 [![Donate Algo](https://img.shields.io/badge/Donate-ALGO-000000.svg?style=flat)](https://algoexplorer.io/address/EJMR773OGLFAJY5L2BCZKNA5PXLDJOWJK4ED4XDYTYH57CG3JMGQGI25DQ)
 
 Yieldly .NET SDK
