@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+		<Description>This library provides access to the Yieldly No Loss Lottery and Staking contracts on the Algorand blockchain.</Description>
+		<Company></Company>
+		<PackageProjectUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</PackageProjectUrl>
+		<Authors>Geoff O'Donnell</Authors>
+		<RepositoryUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
