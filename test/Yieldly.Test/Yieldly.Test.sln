@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.UnitTest", "Yieldly.UnitTest\Yieldly.UnitTest.csproj", "{EBB7A6F4-7B78-4D17-B60A-ABA5CA71A839}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yieldly", "..\..\src\Yieldly\Yieldly.csproj", "{C2BB72EF-BDA6-4DC7-9675-9C344CAE9E39}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EBB7A6F4-7B78-4D17-B60A-ABA5CA71A839}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBB7A6F4-7B78-4D17-B60A-ABA5CA71A839}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBB7A6F4-7B78-4D17-B60A-ABA5CA71A839}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBB7A6F4-7B78-4D17-B60A-ABA5CA71A839}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2BB72EF-BDA6-4DC7-9675-9C344CAE9E39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2BB72EF-BDA6-4DC7-9675-9C344CAE9E39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2BB72EF-BDA6-4DC7-9675-9C344CAE9E39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2BB72EF-BDA6-4DC7-9675-9C344CAE9E39}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {187700E9-10F3-406D-BF86-5E4D604D167C}
+	EndGlobalSection
+EndGlobal

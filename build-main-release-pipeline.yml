@@ -1,0 +1,63 @@
+# Tinyman Release Pipeline
+
+name: '$(nugetPackageId) v$(majorVersion).$(minorVersion).$(patchVersion).$(Rev:r)' 
+
+trigger: none
+
+variables:
+  buildConfiguration: 'Release'
+  nugetPackageId: 'Tinyman'
+  majorVersion: '0'
+  minorVersion: '0'
+  patchVersion: '1'
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Install .Net Core SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '3.1.x'
+
+- task: bleddynrichards.Assembly-Info-Task.Assembly-Info-NetCore.Assembly-Info-NetCore@2
+  displayName: 'Update assembly info'
+  inputs:
+    Path: '$(Build.SourcesDirectory)/src/'
+    FileNames: 'Tinyman/Tinyman.csproj'
+    InsertAttributes: true
+    WriteBOM: true
+    FileVersionNumber: '$(Build.BuildNumber)'
+    InformationalVersion: '$(Build.BuildNumber)'
+    LogLevel: 'verbose'
+    FailOnWarning: false
+    DisableTelemetry: true
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build Tinyman .NET SDK'
+  inputs:
+    command: 'build'
+    projects: 'src/Tinyman/Tinyman.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Test Tinyman .NET SDK'
+  inputs:
+    command: 'test'
+    projects: 'test/Tinyman.UnitTest/Tinyman.UnitTest.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Pack Tinyman .NET SDK Nuget package'
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)/src/Tinyman/Tinyman.csproj --output $(Build.ArtifactStagingDirectory) --no-build /p:Configuration=$(buildConfiguration) /p:PackageID=$(nugetPackageId) /p:PackageVersion=$(AssemblyInfo.FileVersion) --verbosity Detailed'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Tinyman .NET SDK artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
