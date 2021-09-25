@@ -1,0 +1,97 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yieldly.LotteryDepositExample", "Yieldly.LotteryDepositExample\Yieldly.LotteryDepositExample.csproj", "{617D80B5-1A4D-4AD2-B3EE-41FE66D59EB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.LotteryWithdrawExample", "Yieldly.LotteryWithdrawExample\Yieldly.LotteryWithdrawExample.csproj", "{E22006B9-81F6-457B-839B-17C8A4D23553}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.LotteryClaimRewardExample", "Yieldly.LotteryClaimRewardExample\Yieldly.LotteryClaimRewardExample.csproj", "{E3D7B2DA-07F4-4196-B650-D5DC235F4AF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.YieldlyStakingDepositExample", "Yieldly.YieldlyStakingDepositExample\Yieldly.YieldlyStakingDepositExample.csproj", "{6EA8F6A7-F827-4194-AB96-3E97EE7B43E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.YieldlyStakingWithdrawExample", "Yieldly.YieldlyStakingWithdrawExample\Yieldly.YieldlyStakingWithdrawExample.csproj", "{8A9D51B9-E72B-4922-AB46-012C3D40522F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.YieldlyStakingClaimRewardExample", "Yieldly.YieldlyStakingClaimRewardExample\Yieldly.YieldlyStakingClaimRewardExample.csproj", "{0EB2E0DB-C6EC-4C73-B13E-A39F35F0D1FF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yieldly", "..\src\Yieldly\Yieldly.csproj", "{E6ECCE99-0BFE-474B-9851-2B98F28C0066}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseLotteryClaimRewardExample", "Yieldly.VerboseLotteryClaimRewardExample\Yieldly.VerboseLotteryClaimRewardExample.csproj", "{401FF1A4-1DEE-4832-94BC-9DC6BFC44449}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseLotteryDepositExample", "Yieldly.VerboseLotteryDepositExample\Yieldly.VerboseLotteryDepositExample.csproj", "{8CC581A3-87F3-41D6-854F-CA41B73D6E64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseLotteryWithdrawExample", "Yieldly.VerboseLotteryWithdrawExample\Yieldly.VerboseLotteryWithdrawExample.csproj", "{07A7E004-CD64-4602-9C69-4079E5451469}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseYieldlyStakingClaimRewardExample", "Yieldly.VerboseYieldlyStakingClaimRewardExample\Yieldly.VerboseYieldlyStakingClaimRewardExample.csproj", "{48C6791C-2877-44AC-970D-5FA7F8A41245}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseYieldlyStakingDepositExample", "Yieldly.VerboseYieldlyStakingDepositExample\Yieldly.VerboseYieldlyStakingDepositExample.csproj", "{C7A0D92C-8EDE-4645-8AEE-4858E126FBEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yieldly.VerboseYieldlyStakingWithdrawExample", "Yieldly.VerboseYieldlyStakingWithdrawExample\Yieldly.VerboseYieldlyStakingWithdrawExample.csproj", "{BB47D3DD-6D8E-4C7B-A724-6C5D60C5B23E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{617D80B5-1A4D-4AD2-B3EE-41FE66D59EB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{617D80B5-1A4D-4AD2-B3EE-41FE66D59EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{617D80B5-1A4D-4AD2-B3EE-41FE66D59EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{617D80B5-1A4D-4AD2-B3EE-41FE66D59EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E22006B9-81F6-457B-839B-17C8A4D23553}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E22006B9-81F6-457B-839B-17C8A4D23553}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E22006B9-81F6-457B-839B-17C8A4D23553}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E22006B9-81F6-457B-839B-17C8A4D23553}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3D7B2DA-07F4-4196-B650-D5DC235F4AF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3D7B2DA-07F4-4196-B650-D5DC235F4AF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3D7B2DA-07F4-4196-B650-D5DC235F4AF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3D7B2DA-07F4-4196-B650-D5DC235F4AF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EA8F6A7-F827-4194-AB96-3E97EE7B43E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EA8F6A7-F827-4194-AB96-3E97EE7B43E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EA8F6A7-F827-4194-AB96-3E97EE7B43E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EA8F6A7-F827-4194-AB96-3E97EE7B43E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A9D51B9-E72B-4922-AB46-012C3D40522F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A9D51B9-E72B-4922-AB46-012C3D40522F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A9D51B9-E72B-4922-AB46-012C3D40522F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A9D51B9-E72B-4922-AB46-012C3D40522F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EB2E0DB-C6EC-4C73-B13E-A39F35F0D1FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EB2E0DB-C6EC-4C73-B13E-A39F35F0D1FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EB2E0DB-C6EC-4C73-B13E-A39F35F0D1FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EB2E0DB-C6EC-4C73-B13E-A39F35F0D1FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6ECCE99-0BFE-474B-9851-2B98F28C0066}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6ECCE99-0BFE-474B-9851-2B98F28C0066}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6ECCE99-0BFE-474B-9851-2B98F28C0066}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6ECCE99-0BFE-474B-9851-2B98F28C0066}.Release|Any CPU.Build.0 = Release|Any CPU
+		{401FF1A4-1DEE-4832-94BC-9DC6BFC44449}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{401FF1A4-1DEE-4832-94BC-9DC6BFC44449}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{401FF1A4-1DEE-4832-94BC-9DC6BFC44449}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{401FF1A4-1DEE-4832-94BC-9DC6BFC44449}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CC581A3-87F3-41D6-854F-CA41B73D6E64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CC581A3-87F3-41D6-854F-CA41B73D6E64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CC581A3-87F3-41D6-854F-CA41B73D6E64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CC581A3-87F3-41D6-854F-CA41B73D6E64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07A7E004-CD64-4602-9C69-4079E5451469}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07A7E004-CD64-4602-9C69-4079E5451469}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07A7E004-CD64-4602-9C69-4079E5451469}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07A7E004-CD64-4602-9C69-4079E5451469}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48C6791C-2877-44AC-970D-5FA7F8A41245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48C6791C-2877-44AC-970D-5FA7F8A41245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48C6791C-2877-44AC-970D-5FA7F8A41245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48C6791C-2877-44AC-970D-5FA7F8A41245}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7A0D92C-8EDE-4645-8AEE-4858E126FBEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7A0D92C-8EDE-4645-8AEE-4858E126FBEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7A0D92C-8EDE-4645-8AEE-4858E126FBEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7A0D92C-8EDE-4645-8AEE-4858E126FBEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB47D3DD-6D8E-4C7B-A724-6C5D60C5B23E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB47D3DD-6D8E-4C7B-A724-6C5D60C5B23E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB47D3DD-6D8E-4C7B-A724-6C5D60C5B23E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB47D3DD-6D8E-4C7B-A724-6C5D60C5B23E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ABCFF037-FCB7-4632-BAC6-9AB6CAB98AA1}
+	EndGlobalSection
+EndGlobal
