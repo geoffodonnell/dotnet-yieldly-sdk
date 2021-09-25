@@ -1,4 +1,4 @@
-# Tinyman Release Pipeline
+# Yieldly Release Pipeline
 
 name: '$(nugetPackageId) v$(majorVersion).$(minorVersion).$(patchVersion).$(Rev:r)' 
 
@@ -6,7 +6,7 @@ trigger: none
 
 variables:
   buildConfiguration: 'Release'
-  nugetPackageId: 'Tinyman'
+  nugetPackageId: 'Yieldly'
   majorVersion: '0'
   minorVersion: '0'
   patchVersion: '1'
@@ -25,7 +25,7 @@ steps:
   displayName: 'Update assembly info'
   inputs:
     Path: '$(Build.SourcesDirectory)/src/'
-    FileNames: 'Tinyman/Tinyman.csproj'
+    FileNames: 'Yieldly/Yieldly.csproj'
     InsertAttributes: true
     WriteBOM: true
     FileVersionNumber: '$(Build.BuildNumber)'
@@ -35,28 +35,28 @@ steps:
     DisableTelemetry: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'Build Tinyman .NET SDK'
+  displayName: 'Build Yieldly .NET SDK'
   inputs:
     command: 'build'
-    projects: 'src/Tinyman/Tinyman.csproj'
+    projects: 'src/Yieldly/Yieldly.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Test Tinyman .NET SDK'
+  displayName: 'Test Yieldly .NET SDK'
   inputs:
     command: 'test'
-    projects: 'test/Tinyman.UnitTest/Tinyman.UnitTest.csproj'
+    projects: 'test/Yieldly.UnitTest/Yieldly.UnitTest.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Pack Tinyman .NET SDK Nuget package'
+  displayName: 'Pack Yieldly .NET SDK Nuget package'
   inputs:
     command: 'custom'
     custom: 'pack'
-    arguments: '$(Build.SourcesDirectory)/src/Tinyman/Tinyman.csproj --output $(Build.ArtifactStagingDirectory) --no-build /p:Configuration=$(buildConfiguration) /p:PackageID=$(nugetPackageId) /p:PackageVersion=$(AssemblyInfo.FileVersion) --verbosity Detailed'
+    arguments: '$(Build.SourcesDirectory)/src/Yieldly/Yieldly.csproj --output $(Build.ArtifactStagingDirectory) --no-build /p:Configuration=$(buildConfiguration) /p:PackageID=$(nugetPackageId) /p:PackageVersion=$(AssemblyInfo.FileVersion) --verbosity Detailed'
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Tinyman .NET SDK artifact'
+  displayName: 'Publish Yieldly .NET SDK artifact'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
