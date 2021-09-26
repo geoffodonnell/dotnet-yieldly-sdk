@@ -1,6 +1,7 @@
 ﻿using Algorand;
 using Algorand.V2;
 using Algorand.V2.Model;
+using System;
 using System.Linq;
 using Yieldly.V1.Model;
 
@@ -12,6 +13,16 @@ namespace Yieldly.V1 {
 
 		internal AlgodApi AlgodApi { get => mAlgodApi; }
 
+		/// <summary>
+		/// Construct a new instance which connects to the default node
+		/// </summary>
+		public YieldlyClient() :
+			this(new AlgodApi(Constant.AlgodMainnetHost, String.Empty)) { }
+
+		/// <summary>
+		/// Construct a new instance
+		/// </summary>
+		/// <param name="algodApi">Algod API connection</param>
 		public YieldlyClient(
 			AlgodApi algodApi) {
 
