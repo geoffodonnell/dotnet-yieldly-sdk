@@ -97,10 +97,10 @@ namespace Yieldly.V1 {
 		public static PostTransactionsResponse LotteryClaimReward(
 			this YieldlyClient client,
 			Account account,
-			ulong yieldlyAmount) {
+			LotteryRewardAmount amount) {
 
 			var txs = PrepareLotteryClaimRewardTransactions(
-				client, account.Address, yieldlyAmount);
+				client, account.Address, amount);
 
 			txs.Sign(account);
 
@@ -136,10 +136,10 @@ namespace Yieldly.V1 {
 		public static PostTransactionsResponse YieldyStakingClaimReward(
 			this YieldlyClient client,
 			Account account,
-			RewardAmounts amounts) {
+			StakingRewardAmount amount) {
 
 			var txs = PrepareYieldlyStakingClaimRewardTransactions(
-				client, account.Address, amounts);
+				client, account.Address, amount);
 
 			txs.Sign(account);
 
@@ -223,13 +223,13 @@ namespace Yieldly.V1 {
 		public static TransactionGroup PrepareLotteryClaimRewardTransactions(
 			this YieldlyClient client,
 			Address sender,
-			ulong yieldlyAmount) {
+			LotteryRewardAmount amount) {
 
 			var txParams = client.AlgodApi.TransactionParams();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryClaimRewardTransactions(
-					yieldlyAmount, sender, txParams);
+					amount.Yieldly, sender, txParams);
 
 			return result;
 		}
@@ -263,13 +263,13 @@ namespace Yieldly.V1 {
 		public static TransactionGroup PrepareYieldlyStakingClaimRewardTransactions(
 			this YieldlyClient client,
 			Address sender,
-			RewardAmounts amounts) {
+			StakingRewardAmount amount) {
 
 			var txParams = client.AlgodApi.TransactionParams();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingClaimRewardTransactions(
-					amounts.Algo, amounts.Yieldly, sender, txParams);
+					amount.Algo, amount.Yieldly, sender, txParams);
 
 			return result;
 		}

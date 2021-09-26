@@ -2,9 +2,9 @@
 
 	public class FetchAmountsResult {
 
-		public RewardAmounts LotteryReward { get; set; }
+		public LotteryRewardAmount LotteryReward { get; set; }
 
-		public RewardAmounts StakingReward { get; set; }
+		public StakingRewardAmount StakingReward { get; set; }
 
 		public ulong AlgoInLottery { get; set; }
 

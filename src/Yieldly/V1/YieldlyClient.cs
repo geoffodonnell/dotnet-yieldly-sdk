@@ -47,8 +47,8 @@ namespace Yieldly.V1 {
 			var lotteryApp = mAlgodApi.GetApplicationByID((long)Constant.LotteryAppId);
 			var stakingApp = mAlgodApi.GetApplicationByID((long)Constant.StakingAppId);
 
-			var lotteryReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, lotteryApp);
-			var stakingReward = YieldlyEquation.CalculateClaimableAmount(accountInfo, stakingApp);
+			var lotteryReward = YieldlyEquation.CalculateLotteryClaimableAmount(accountInfo, lotteryApp);
+			var stakingReward = YieldlyEquation.CalculateStakingClaimableAmount(accountInfo, stakingApp);
 			var algoInLottery = accountInfo?
 				.AppsLocalState?
 				.FirstOrDefault(s => s.Id == lotteryApp.Id)?

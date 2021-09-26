@@ -1,6 +1,6 @@
 ﻿namespace Yieldly.V1.Model {
 
-	public class RewardAmounts {
+	public class StakingRewardAmount {
 
 		public ulong Algo { get; set; }
 

@@ -28,7 +28,7 @@ namespace Yieldly.LotteryClaimRewardExample {
 
 			// Claim current Yieldy rewards from lottery
 			try {
-				var result = client.LotteryClaimReward(account, amounts.LotteryReward.Yieldly);
+				var result = client.LotteryClaimReward(account, amounts.LotteryReward);
 
 				Console.WriteLine($"Lottery reward claim complete, transaction ID: {result.TxId}");
 
