@@ -211,55 +211,6 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
-		public static TransactionGroup PrepareLotteryClaimWinningTransactions(
-			ulong algoAmount,
-			Address sender,
-			TransactionParametersResponse txParams) {
-
-			// This tx group looks like a claim:
-			//	https://algoexplorer.io/tx/group/dEKgy0JxE%2FzwAd2ySLkU2nucXC2ALlxLlhoGYzrXl5o%3D
-
-			var escrowSignature = Contract.EscrowLogicsigSignature;
-			var escrowAddress = escrowSignature.Address;
-
-			var transactions = new List<Transaction>();
-
-			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
-
-			transactions.Add(callTx1);
-
-			// Call No Loss Lottery App w/ arg W
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
-			callTx2.accounts.Add(escrowAddress);
-
-			transactions.Add(callTx2);
-
-			// Claim Algo from Lottery
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					escrowAddress, sender, algoAmount, null, txParams));
-
-			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 1000, null, txParams));
-
-			var result = new TransactionGroup(transactions);
-
-			result.SignWithLogicSig(escrowSignature);
-
-			return result;
-		}
-
 		#endregion
 
 		#region Yieldly Staking

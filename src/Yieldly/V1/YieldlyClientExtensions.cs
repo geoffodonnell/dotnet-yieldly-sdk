@@ -107,19 +107,6 @@ namespace Yieldly.V1 {
 			return client.Submit(txs, true);
 		}
 
-		public static PostTransactionsResponse LotteryClaimWinning(
-			this YieldlyClient client,
-			Account account,
-			ulong algoAmount) {
-
-			var txs = PrepareLotteryClaimWinningTransactions(
-				client, account.Address, algoAmount);
-
-			txs.Sign(account);
-
-			return client.Submit(txs, true);
-		}
-
 		public static PostTransactionsResponse YieldlyStakingDeposit(
 			this YieldlyClient client,
 			Account account,
@@ -243,20 +230,6 @@ namespace Yieldly.V1 {
 			var result = YieldlyTransaction
 				.PrepareLotteryClaimRewardTransactions(
 					yieldlyAmount, sender, txParams);
-
-			return result;
-		}
-
-		public static TransactionGroup PrepareLotteryClaimWinningTransactions(
-			this YieldlyClient client,
-			Address sender,
-			ulong algoAmount) {
-
-			var txParams = client.AlgodApi.TransactionParams();
-
-			var result = YieldlyTransaction
-				.PrepareLotteryClaimWinningTransactions(
-					algoAmount, sender, txParams);
 
 			return result;
 		}
