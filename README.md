@@ -8,6 +8,19 @@ Yieldly .NET SDK
 # Overview
 This library provides access to the [Yieldly](https://app.yieldly.finance/) No Loss Lottery and Staking contracts on the Algorand blockchain.
 
+# Installation
+Releases are available at [nuget.org](https://www.nuget.org/packages/Yieldly/).
+
+## Package Manager
+```
+PM> Install-Package -Id Yieldly
+```
+
+## .NET CLI
+```
+dotnet add package Yieldly
+```
+
 # Usage
 This section contains examples for interacting with the lottery and staking contracts. It's possible to use this SDK without passing the Account object to SDK methods, see the `Verbose` example projects in the [/examples](/examples) directory.
 
