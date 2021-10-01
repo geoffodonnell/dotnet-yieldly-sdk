@@ -110,8 +110,8 @@ namespace Yieldly.V1 {
 			mDispatcherApp = mContracts.Contracts[mDispatcherAppName] as AppContract;
 			mBridgeOptingApp = mContracts.Contracts[mBridgeOptingAppName] as AppContract;
 			mBridgeProxyApp = mContracts.Contracts[mBridgeProxyAppName] as AppContract;
-			mEscrowLogicSig = mContracts.Contracts[mEscrowLogicSigName] as LogicSigContract;
 #endif
+			mEscrowLogicSig = mContracts.Contracts[mEscrowLogicSigName] as LogicSigContract;
 			mEscrowLogicsigSignature = GetLogicsigSignature(Base64.Decode(mEscrowLogicSig?.Logic?.ByteCode), true);
 		}
 
