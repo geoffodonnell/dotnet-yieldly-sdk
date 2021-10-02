@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Yieldly\Yieldly.csproj" />
+    <ProjectReference Include="..\..\src\Yieldly\Yieldly.csproj" />
   </ItemGroup>
 
 </Project>
