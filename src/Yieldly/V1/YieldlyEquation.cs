@@ -52,6 +52,27 @@ namespace Yieldly.V1 {
 			};
 		}
 
+		public static AsaStakingRewardAmount CalculateAsaStakePoolClaimableAmount(
+			Account accountInfo, Application application) {
+
+			var share = GetUserShareOfClaimableTotalAmount(accountInfo, application);
+
+			if (!share.HasValue) {
+				return null;
+			}
+
+			var stakingAppGlobalState = application?
+				.Params?
+				.GlobalState;
+
+			var tyul = stakingAppGlobalState.GetTotalClaimableYieldlyValue().GetValueOrDefault();
+			var claimableAmount = share * tyul;
+
+			return new AsaStakingRewardAmount {
+				Asa = (ulong)claimableAmount
+			};
+		}
+
 		private static double? GetUserShareOfClaimableTotalAmount(
 			Account accountInfo, Application application) {
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Yieldly.V1.Model;
 
 namespace Yieldly.V1 {
 
@@ -21,6 +22,9 @@ namespace Yieldly.V1 {
 		private static readonly string TotalClaimableYieldlyKey
 			= Base64.ToBase64String(Strings.ToUtf8ByteArray("TYUL"));
 
+		private static readonly string TotalClaimableAsaKey
+			= Base64.ToBase64String(Strings.ToUtf8ByteArray("TYUL"));
+
 		private static readonly string TotalClaimableAlgoKey
 			= Base64.ToBase64String(Strings.ToUtf8ByteArray("TAP"));
 
@@ -33,6 +37,16 @@ namespace Yieldly.V1 {
 		private static readonly string UserTimeKey
 			= Base64.ToBase64String(Strings.ToUtf8ByteArray("UT"));
 
+		public static SimpleAsset ToSimpleAsset(this Asset asset) {
+
+			return new SimpleAsset {
+				Id = (ulong)asset.Index.GetValueOrDefault(),
+				Name = asset.Params.Name,
+				UnitName = asset.Params.UnitName,
+				Decimals = (int)asset.Params.Decimals.GetValueOrDefault()
+			};
+		}
+		
 		public static ulong? GetGlobalTimeValue(this TealKeyValueStore values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, GlobalTimeKey, mCmp))?
@@ -57,6 +71,13 @@ namespace Yieldly.V1 {
 		public static ulong? GetTotalClaimableAlgoValue(this TealKeyValueStore values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAlgoKey, mCmp))?
+				.Value?
+				.Uint;
+		}
+
+		public static ulong? GetTotalClaimableAsaValue(this TealKeyValueStore values) {
+			return values
+				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAsaKey, mCmp))?
 				.Value?
 				.Uint;
 		}
