@@ -45,9 +45,31 @@ namespace Yieldly.V1 {
 			return new TransactionGroup(transactions);
 		}
 
-		public static TransactionGroup PrepareOptOutTransactions(
+		/// <summary>
+		/// Prepare a transaction group to opt-in to staking pool.
+		/// </summary>
+		/// <param name="appId">Pool application ID</param>
+		/// <param name="sender">Account address</param>
+		/// <param name="txParams">Network parameters</param>
+		/// <returns></returns>
+		public static TransactionGroup PrepareAsaStakingPoolOptInTransactions(
+			ulong appId,
 			Address sender,
+			TransactionParametersResponse txParams) {
+
+			// NOTE: Sending a tx group containing app opt-in and asset opt-in transactions
+			// fails, so the opt-in process is a two step process.
+
+			var transactions = new List<Transaction>() {
+				Algorand.Utils.GetApplicationOptinTransaction(sender, appId, txParams)
+			};
+
+			return new TransactionGroup(transactions);
+		}
+
+		public static TransactionGroup PrepareOptOutTransactions(
 			Address closeTo,
+			Address sender,
 			TransactionParametersResponse txParams,
 			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
@@ -74,6 +96,54 @@ namespace Yieldly.V1 {
 			if (includeLotteryContract) {
 				transactions.Add(Algorand.Utils.GetApplicationCloseTransaction(
 					sender, (long)Constant.LotteryAppId, txParams));
+			}
+
+			return new TransactionGroup(transactions);
+		}
+
+		/// <summary>
+		/// Prepare a transaction group to opt-out of staking pool
+		/// </summary>
+		/// <param name="appId">Pool application ID</param>
+		/// <param name="sender">Account address</param>
+		/// <param name="txParams">Network parameters</param>
+		/// <returns></returns>
+		public static TransactionGroup PrepareAsaStakingPoolOptOutTransactions(
+			ulong appId,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			return PrepareAsaStakingPoolOptOutTransactions(appId, null, sender, null, txParams);
+		}
+
+		/// <summary>
+		/// Prepare a transaction group to opt-out of staking pool and, optionally, an asset.
+		/// </summary>
+		/// <param name="appId">Pool application ID</param>
+		/// <param name="assetId">Asset ID (optional)</param>
+		/// <param name="sender">Account address</param>
+		/// <param name="txParams">Network parameters</param>
+		/// <returns></returns>
+		public static TransactionGroup PrepareAsaStakingPoolOptOutTransactions(
+			ulong appId,
+			ulong? assetId,
+			Address closeTo,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			var transactions = new List<Transaction>();
+
+			transactions.Add(Algorand.Utils.GetApplicationClearTransaction(
+				sender, appId, txParams));
+
+			if (assetId.HasValue) {
+				if (closeTo == null) {
+					throw new ArgumentException(
+						$"'{nameof(closeTo)}' cannot be null when '{nameof(assetId)}' is defined.");
+				}
+
+				transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+					sender, sender, (long)assetId, 0, txParams, closeTo: closeTo));
 			}
 
 			return new TransactionGroup(transactions);
@@ -379,8 +449,8 @@ namespace Yieldly.V1 {
 
 		public static TransactionGroup PrepareAsaStakingPoolDepositTransactions(
 			ulong stakeAmount,
+			AsaStakingPool pool,
 			Address sender,
-			YieldlyAsaStakingPool pool,
 			TransactionParametersResponse txParams) {
 
 			var escrowSignature = pool.LogicsigSignature;
@@ -425,8 +495,8 @@ namespace Yieldly.V1 {
 
 		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactions(
 			ulong stakeAmount,
+			AsaStakingPool pool,
 			Address sender,
-			YieldlyAsaStakingPool pool,
 			TransactionParametersResponse txParams) {
 
 			var escrowSignature = pool.LogicsigSignature;
@@ -478,8 +548,8 @@ namespace Yieldly.V1 {
 
 		public static TransactionGroup PrepareAsaStakingPoolClaimRewardTransactions(
 			ulong rewardAmount,
+			AsaStakingPool pool,
 			Address sender,
-			YieldlyAsaStakingPool pool,
 			TransactionParametersResponse txParams) {
 
 			var escrowSignature = pool.LogicsigSignature;
@@ -528,6 +598,39 @@ namespace Yieldly.V1 {
 			result.SignWithLogicSig(escrowSignature);
 
 			return result;
+		}
+		#endregion
+
+		#region Utility Transactions
+		public static TransactionGroup PrepareAssetOptInTransactions(
+			ulong assetId,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			var transactions = new List<Transaction>() {
+				Algorand.Utils.GetAssetOptingInTransaction(sender, (long)assetId, txParams)
+			};	
+
+			return new TransactionGroup(transactions);
+		}
+
+		public static TransactionGroup PrepareAssetOptOutTransactions(
+			ulong assetId,
+			Address closeTo,
+			Address sender,
+			TransactionParametersResponse txParams) {
+
+			if (closeTo == null) {
+				throw new ArgumentException(
+					$"'{nameof(closeTo)}' cannot be null.");
+			}
+
+			var transactions = new List<Transaction>(){
+				Algorand.Utils.GetTransferAssetTransaction(
+					sender, sender, (long)assetId, 0, txParams, closeTo: closeTo)
+			};			
+
+			return new TransactionGroup(transactions);
 		}
 		#endregion
 

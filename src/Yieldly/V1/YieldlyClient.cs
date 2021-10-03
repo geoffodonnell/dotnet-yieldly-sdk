@@ -71,7 +71,7 @@ namespace Yieldly.V1 {
 			};
 		}
 
-		public virtual YieldlyAsaStakingPool FetchStakingPool(ulong appId) {
+		public virtual AsaStakingPool FetchStakingPool(ulong appId) {
 
 			var lsigSignature = Contract.GetAsaStakePoolLogicsigSignature(appId);
 			var poolApp = mAlgodApi.GetApplicationByID((long)appId);
@@ -106,7 +106,7 @@ namespace Yieldly.V1 {
 
 			var rewardAsset = mAlgodApi.GetAssetByID((long)rewardAssetId);
 
-			return new YieldlyAsaStakingPool { 
+			return new AsaStakingPool { 
 				Client = this,
 				ApplicationId = appId,
 				Address = escrowAddress.EncodeAsString(),
@@ -277,8 +277,8 @@ namespace Yieldly.V1 {
 
 			var result = YieldlyTransaction
 				.PrepareOptOutTransactions(
-					sender,
 					closeTo,
+					sender,
 					txParams,
 					includeYieldlyAsa,
 					includeProxyContract,
