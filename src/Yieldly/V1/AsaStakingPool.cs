@@ -2,6 +2,7 @@
 using Algorand.V2;
 using Algorand.V2.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Yieldly.V1.Model;
 using Account = Algorand.Account;
@@ -25,16 +26,19 @@ namespace Yieldly.V1 {
 
 		internal Application Application { get; set; }
 
+		/// <summary>
+		/// Refresh the pool information.
+		/// </summary>
 		public void Refresh() {
 
 			Application = Client.AlgodApi.GetApplicationByID((long)ApplicationId);
 		}
 
 		/// <summary>
-		/// Check whether or not the address is opted in to the pool application.
+		/// Check whether or not the address is opted-in to the pool application.
 		/// </summary>
 		/// <param name="address">Address of account</param>
-		/// <returns>Whether or not the address is opted in</returns>
+		/// <returns>Whether or not the address is opted-in</returns>
 		public virtual bool IsOptedIn(Address address) {
 
 			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
@@ -48,8 +52,13 @@ namespace Yieldly.V1 {
 			}
 
 			return false;
-		}	
+		}
 
+		/// <summary>
+		/// Check whether or not the address is opted-in to the staking asset.
+		/// </summary>
+		/// <param name="address">Address of account</param>
+		/// <returns>Whether or not the address is opted-in</returns>
 		public virtual bool IsOptedInToStakeAsset(Address address) {
 
 			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
@@ -57,6 +66,11 @@ namespace Yieldly.V1 {
 			return AccountIsOptedInToAsset(info, StakeAsset.Id);
 		}
 
+		/// <summary>
+		/// Check whether or not the address is opted-in to the reward asset.
+		/// </summary>
+		/// <param name="address">Address of account</param>
+		/// <returns>Whether or not the address is opted-in</returns>
 		public virtual bool IsOptedInToRewardAsset(Address address) {
 			
 			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
@@ -72,7 +86,13 @@ namespace Yieldly.V1 {
 				.Any(s => s.AssetId == (long)assetId);
 		}
 
-		public FetchAsaStakingPoolAmountsResult FetchAmounts(
+		/// <summary>
+		/// Fetch amounts from pool
+		/// </summary>
+		/// <param name="address">Address of account</param>
+		/// <param name="refreshPoolInfo">Whether or not the pool information should be refreshed</param>
+		/// <returns>Pool amounts</returns>
+		public FetchAsaStakingAmountsResult FetchAmounts(
 			Address address, bool refreshPoolInfo = false) {
 
 			var accountInfo = Client.AlgodApi.AccountInformation(address.EncodeAsString());
@@ -89,16 +109,29 @@ namespace Yieldly.V1 {
 				.GetUserAmountValue()
 				.GetValueOrDefault();
 
-			return new FetchAsaStakingPoolAmountsResult {
+			return new FetchAsaStakingAmountsResult {
 				Reward = reward?.Asa ?? 0ul,
 				Staked = staked.GetValueOrDefault()
 			};
 		}
 
-		public virtual PostTransactionsResponse OptIn(
+		/// <summary>
+		/// Opt-in to the pool, optionally opt-in to staking and reward assets (if neccessary).
+		/// 
+		/// NOTE: Unlike other operations, these transactions cannot be issued in a single
+		/// transaction group. Therefore, opting-in to asset(s) here will result in submitting
+		/// multiple transactions.
+		/// </summary>
+		/// <param name="account">Account to opt-in</param>
+		/// <param name="optInToStakeAsset">Whether or not to opt-in to the stake asset</param>
+		/// <param name="optInToRewardAsset">Whether or not to opt-in to the reward asset</param>
+		/// <returns>Transaction responses</returns>
+		public virtual PostTransactionsResponse[] OptIn(
 			Account account,
 			bool optInToStakeAsset = true,
 			bool optInToRewardAsset = true) {
+
+			var results = new List<PostTransactionsResponse>();
 
 			AccountInformation accountInfo = (optInToStakeAsset || optInToRewardAsset)
 				? Client.AlgodApi.AccountInformation(account.Address.EncodeAsString())
@@ -110,7 +143,9 @@ namespace Yieldly.V1 {
 				
 				stakeAssetOptInTxs.Sign(account);
 
-				Client.Submit(stakeAssetOptInTxs, true);
+				var stakeAssetOptInResult = Client.Submit(stakeAssetOptInTxs, true);
+
+				results.Add(stakeAssetOptInResult);
 			}
 
 			// If neccessary, opt-in to reward asset
@@ -119,7 +154,9 @@ namespace Yieldly.V1 {
 
 				rewardAssetOptInTxs.Sign(account);
 
-				Client.Submit(rewardAssetOptInTxs, true);
+				var rewardAssetOptInResult = Client.Submit(rewardAssetOptInTxs, true);
+
+				results.Add(rewardAssetOptInResult);
 			}
 
 			// Finally, opt-in to app
@@ -127,9 +164,20 @@ namespace Yieldly.V1 {
 
 			appOptInTxs.Sign(account);
 
-			return Client.Submit(appOptInTxs, true);
+			var appOptInResult = Client.Submit(appOptInTxs, true);
+
+			results.Add(appOptInResult);
+
+			return results.ToArray();
 		}
 
+		/// <summary>
+		/// Opt-out of the stake pool application and, optionally, the reward asset.
+		/// </summary>
+		/// <param name="account">Account to opt-out</param>
+		/// <param name="optOutOfRewardAsset">Whether or not to opt-out of the reward asset</param>
+		/// <param name="checkRewardAssetBalance">Whether or not to check the balance of reward asset before opting-out</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse OptOut(
 			Account account,
 			bool optOutOfRewardAsset = false,
@@ -157,6 +205,12 @@ namespace Yieldly.V1 {
 			return Client.Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Deposit into the stake pool.
+		/// </summary>
+		/// <param name="account">Account to make deposit</param>
+		/// <param name="stakeAmount">Amount to deposit</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse Deposit(
 			Account account,
 			ulong stakeAmount) {
@@ -169,18 +223,30 @@ namespace Yieldly.V1 {
 			return Client.Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Withdraw from the stake pool.
+		/// </summary>
+		/// <param name="account">Account to make withdrawl</param>
+		/// <param name="withdrawAmount">Amount to withdraw</param>
+		/// <returns></returns>
 		public virtual PostTransactionsResponse Withdraw(
 			Account account,
-			ulong stakeAmount) {
+			ulong withdrawAmount) {
 
 			var txs = PrepareWithdrawTransactions(
-				account.Address, stakeAmount);
+				account.Address, withdrawAmount);
 
 			txs.Sign(account);
 
 			return Client.Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Claim reward from stake pool.
+		/// </summary>
+		/// <param name="account">Account to make claim</param>
+		/// <param name="rewardAmount">Amount to claim</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse ClaimReward(
 			Account account,
 			ulong rewardAmount) {
@@ -192,7 +258,12 @@ namespace Yieldly.V1 {
 
 			return Client.Submit(txs, true);
 		}
-		
+
+		/// <summary>
+		/// Create a transaction group to opt-in to the pool.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareOptInTransactions(Address sender) {
 
 			var txParams = Client.AlgodApi.TransactionParams();
@@ -203,6 +274,11 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to opt-in to the stake asset.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareStakeAssetOptInTransactions(Address sender) {
 
 			var txParams = Client.AlgodApi.TransactionParams();
@@ -213,6 +289,11 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to opt-in to the reward asset.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareRewardAssetOptInTransactions(Address sender) {
 
 			var txParams = Client.AlgodApi.TransactionParams();
@@ -224,11 +305,11 @@ namespace Yieldly.V1 {
 		}
 
 		/// <summary>
-		/// Opt-out of pool application and, optionally, the reward asset.
+		/// Create a transaction group to opt-out of pool application and, optionally, the reward asset.
 		/// </summary>
 		/// <param name="sender">Address of account</param>
 		/// <param name="optOutOfRewardAsset">Whether or not to opt-out of the asset</param>
-		/// <returns>Transactions that perfom this action</returns>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareOptOutTransactions(
 			Address sender, bool optOutOfRewardAsset = false) {
 
@@ -247,6 +328,12 @@ namespace Yieldly.V1 {
 					ApplicationId, sender, txParams);
 		}
 
+		/// <summary>
+		/// Create a transaction group to deposit into the stake pool
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="stakeAmount">Amount to stake</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareDepositTransactions(
 			Address sender,
 			ulong stakeAmount) {
@@ -259,18 +346,30 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to withdraw from the stake pool
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="withdrawAmount">Amount to withdraw</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareWithdrawTransactions(
 			Address sender,
-			ulong stakeAmount) {
+			ulong withdrawAmount) {
 
 			var txParams = Client.AlgodApi.TransactionParams();
 
 			var result = YieldlyTransaction
-				.PrepareAsaStakingPoolWithdrawTransactions(stakeAmount, this, sender, txParams);
+				.PrepareAsaStakingPoolWithdrawTransactions(withdrawAmount, this, sender, txParams);
 
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to claim rewards from the stake pool
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="rewardAmount">Amount to claim</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareClaimRewardTransactions(
 			Address sender,
 			ulong rewardAmount) {

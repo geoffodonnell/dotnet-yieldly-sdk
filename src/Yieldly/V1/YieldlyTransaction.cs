@@ -494,7 +494,7 @@ namespace Yieldly.V1 {
 		}
 
 		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactions(
-			ulong stakeAmount,
+			ulong withdrawAmount,
 			AsaStakingPool pool,
 			Address sender,
 			TransactionParametersResponse txParams) {
@@ -531,7 +531,7 @@ namespace Yieldly.V1 {
 				escrowAddress,
 				sender,
 				(long)pool.StakeAsset.Id,
-				stakeAmount,
+				withdrawAmount,
 				txParams);
 
 			// Passing flatFee: 0 to the utility method is ignored

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Yieldly.V1.Model {
 
-	public class FetchAsaStakingPoolAmountsResult {
+	public class FetchAsaStakingAmountsResult {
 
 		public ulong Staked { get; set; }
 
