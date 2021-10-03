@@ -107,7 +107,7 @@ namespace Yieldly.V1 {
 			var rewardAsset = mAlgodApi.GetAssetByID((long)rewardAssetId);
 
 			return new YieldlyAsaStakingPool { 
-				AlgodApi = mAlgodApi,
+				Client = this,
 				ApplicationId = appId,
 				Address = escrowAddress.EncodeAsString(),
 				StakeAsset = stakeAsset.ToSimpleAsset(),

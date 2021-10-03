@@ -375,6 +375,162 @@ namespace Yieldly.V1 {
 		}
 		#endregion
 
+		#region ASA Staking
+
+		public static TransactionGroup PrepareAsaStakingPoolDepositTransactions(
+			ulong stakeAmount,
+			Address sender,
+			YieldlyAsaStakingPool pool,
+			TransactionParametersResponse txParams) {
+
+			var escrowSignature = pool.LogicsigSignature;
+			var escrowAddress = escrowSignature.Address;
+
+			var transactions = new List<Transaction>();
+
+			// Call Staking App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call Staking App w/ arg S
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("S"));
+
+			transactions.Add(callTx2);
+
+			// Send amount to Escrow address
+			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+				sender,
+				escrowAddress,
+				(long)pool.StakeAsset.Id,
+				stakeAmount,
+				txParams));
+
+			var result = new TransactionGroup(transactions);
+
+			result.SignWithLogicSig(escrowSignature);
+
+			return result;
+		}
+
+		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactions(
+			ulong stakeAmount,
+			Address sender,
+			YieldlyAsaStakingPool pool,
+			TransactionParametersResponse txParams) {
+
+			var escrowSignature = pool.LogicsigSignature;
+			var escrowAddress = escrowSignature.Address;
+			var transactions = new List<Transaction>();
+
+			// Call Staking App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx1.fee = 1000;
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call Staking App w/ arg W
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx2.fee = 2000;
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
+			callTx2.accounts.Add(escrowAddress);
+
+			transactions.Add(callTx2);
+
+			// Withdraw amount from Escrow address
+			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
+				escrowAddress,
+				sender,
+				(long)pool.StakeAsset.Id,
+				stakeAmount,
+				txParams);
+
+			// Passing flatFee: 0 to the utility method is ignored
+			xferTx.fee = 0;
+
+			transactions.Add(xferTx);
+
+			var result = new TransactionGroup(transactions);
+
+			result.SignWithLogicSig(escrowSignature);
+
+			return result;
+		}
+
+		public static TransactionGroup PrepareAsaStakingPoolClaimRewardTransactions(
+			ulong rewardAmount,
+			Address sender,
+			YieldlyAsaStakingPool pool,
+			TransactionParametersResponse txParams) {
+
+			var escrowSignature = pool.LogicsigSignature;
+			var escrowAddress = escrowSignature.Address;
+
+			var transactions = new List<Transaction>();
+
+			// Call Staking App w/ arg check
+			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx1.fee = 1000;
+			callTx1.onCompletion = OnCompletion.Noop;
+			callTx1.applicationArgs = new List<byte[]>();
+			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+
+			transactions.Add(callTx1);
+
+			// Call Staking App w/ arg CA
+			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
+				sender, pool.ApplicationId, txParams);
+
+			callTx2.fee = 2000;
+			callTx2.onCompletion = OnCompletion.Noop;
+			callTx2.applicationArgs = new List<byte[]>();
+			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
+			callTx2.accounts.Add(escrowAddress);
+
+			transactions.Add(callTx2);
+
+			// Claim amount staking reward from escrow address
+			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
+				escrowAddress,
+				sender,
+				(long)pool.RewardAsset.Id,
+				rewardAmount,
+				txParams);
+
+			// Passing flatFee: 0 to the utility method is ignored
+			xferTx.fee = 0;
+
+			transactions.Add(xferTx);
+
+			var result = new TransactionGroup(transactions);
+
+			result.SignWithLogicSig(escrowSignature);
+
+			return result;
+		}
+		#endregion
+
 	}
 
 }
