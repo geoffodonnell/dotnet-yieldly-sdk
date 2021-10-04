@@ -8,6 +8,9 @@ Yieldly .NET SDK
 # Overview
 This library provides access to the [Yieldly](https://app.yieldly.finance/) No Loss Lottery and Staking contracts on the Algorand blockchain.
 
+## Stake pools
+Arbitrary stake pools are now supported. Use the `FetchStakingPool(...)` method on `YieldlyClient` to retrieve pool, this object can be used by following the same pattern as the client itself. That is, either pass the account instance to a method, which will submit signed transactions to complete an operation, or use the `Prepare...` methods to create a transaction group and handle signing the applicable transactions (see the [example](/example) directory for sample implementations).
+
 # Installation
 Releases are available at [nuget.org](https://www.nuget.org/packages/Yieldly/).
 
@@ -22,7 +25,7 @@ dotnet add package Yieldly
 ```
 
 # Usage
-This section contains examples for interacting with the lottery and staking contracts. It's possible to use this SDK without passing the Account object to SDK methods, see the `Verbose` example projects in the [/examples](/examples) directory.
+This section contains examples for interacting with the lottery and staking contracts. It's possible to use this SDK without passing the Account object to SDK methods, see the `Verbose` example projects in the [example](/example) directory.
 
 Note, deposits and withdraws are to/from an escrow account, not the contracts themselves. 
 
@@ -121,7 +124,7 @@ var result = client.YieldyStakingClaimReward(account, amounts.StakingReward);
 ```
 
 # Examples
-Full examples, simple and verbose, can be found in [/example](/example).
+Full examples, simple and verbose, can be found in [example](/example).
 
 # How?
 This SDK was built by analyzing the transactions created by the [Yieldly](https://app.yieldly.finance/) website in [AlgoExporer](https://algoexplorer.io/). A special thanks [@JoshLmao](https://github.com/JoshLmao), his code provided a starting point for reward calculations. 
