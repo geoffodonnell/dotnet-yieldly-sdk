@@ -43,6 +43,11 @@ namespace Yieldly.V1 {
 			return transactionGroup.Submit(mAlgodApi, wait);
 		}
 
+		/// <summary>
+		/// Fetch amounts from Lottery and Yieldly staking apps.
+		/// </summary>
+		/// <param name="address">Address of account</param>
+		/// <returns>Application amounts</returns>
 		public virtual FetchAmountsResult FetchAmounts(Address address) {
 
 			var accountInfo = mAlgodApi.AccountInformation(address.EncodeAsString());
@@ -71,6 +76,11 @@ namespace Yieldly.V1 {
 			};
 		}
 
+		/// <summary>
+		/// Get a stake pool by application ID.
+		/// </summary>
+		/// <param name="appId">Application ID of the staking pool</param>
+		/// <returns>Stake pool</returns>
 		public virtual AsaStakingPool FetchStakingPool(ulong appId) {
 
 			var lsigSignature = Contract.GetAsaStakePoolLogicsigSignature(appId);
@@ -117,12 +127,21 @@ namespace Yieldly.V1 {
 			};
 		}
 
+		/// <summary>
+		/// Opt-in to Yieldly base contracts and asset.
+		/// </summary>
+		/// <param name="account">Account to opt-in</param>
+		/// <param name="includeProxyContract">Whether or not to opt-in to the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-in to the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-in to the Yieldly asset</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse OptIn(
 			Account account,
-			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
-			bool includeLotteryContract = true) {
+			bool includeLotteryContract = true,
+			bool includeYieldlyAsa = true) {
 
 			var txs = PrepareOptInTransactions(
 				account.Address,
@@ -136,12 +155,22 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Opt-out of Yieldly base contracts and asset.
+		/// </summary>
+		/// <param name="account">Account to opt-out</param>
+		/// <param name="includeProxyContract">Whether or not to opt-out of the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-out of the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-out of the lottery contract</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-out of the Yieldly asset</param>
+		/// <param name="checkAssetBalance">Whether or not to check the balance before opting-out</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse OptOut(
 			Account account,
-			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
 			bool includeLotteryContract = true,
+			bool includeYieldlyAsa = false,
 			bool checkAssetBalance = true) {
 
 			var yieldlyAssetId = (long)Constant.YieldlyAssetId;
@@ -170,6 +199,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Deposit into the lottery.
+		/// </summary>
+		/// <param name="account">Account to make deposit</param>
+		/// <param name="algoAmount">Amount to deposit</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse LotteryDeposit(
 			Account account,
 			ulong algoAmount) {
@@ -182,6 +217,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Withdraw from the lottery.
+		/// </summary>
+		/// <param name="account">Account to make withdrawl</param>
+		/// <param name="algoAmount">Amount to withdraw</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse LotteryWithdraw(
 			Account account,
 			ulong algoAmount) {
@@ -194,6 +235,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Claim reward from lottery.
+		/// </summary>
+		/// <param name="account">Account to make claim</param>
+		/// <param name="amount">Amount to claim</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse LotteryClaimReward(
 			Account account,
 			LotteryRewardAmount amount) {
@@ -206,6 +253,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Deposit into the Yieldly staking pool.
+		/// </summary>
+		/// <param name="account">Account to make deposit</param>
+		/// <param name="yieldlyAmount">Amount to deposit</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse YieldlyStakingDeposit(
 			Account account,
 			ulong yieldlyAmount) {
@@ -218,6 +271,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Withdraw from the Yieldly staking pool.
+		/// </summary>
+		/// <param name="account">Account to make withdrawl</param>
+		/// <param name="yieldlyAmount">Amount to withdraw</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse YieldlyStakingWithdraw(
 			Account account,
 			ulong yieldlyAmount) {
@@ -230,6 +289,12 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Claim reward from the Yieldly staking pool.
+		/// </summary>
+		/// <param name="account">Account to make claim</param>
+		/// <param name="amount">Amount to claim</param>
+		/// <returns>Transaction response</returns>
 		public virtual PostTransactionsResponse YieldyStakingClaimReward(
 			Account account,
 			StakingRewardAmount amount) {
@@ -242,12 +307,21 @@ namespace Yieldly.V1 {
 			return Submit(txs, true);
 		}
 
+		/// <summary>
+		/// Create a transaction group to opt-in to the base contracts and Yieldly asset.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="includeProxyContract">Whether or not to opt-in to the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-in to the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-in to Yieldly asset</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareOptInTransactions(
 			Address sender,
-			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
-			bool includeLotteryContract = true) {
+			bool includeLotteryContract = true,
+			bool includeYieldlyAsa = true) {
 
 			var txParams = mAlgodApi.TransactionParams();
 
@@ -263,12 +337,21 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to opt-out of the base contracts and Yieldly asset.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="includeProxyContract">Whether or not to opt-out of the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-of the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-out of the lottery contract</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-out of the Yieldly asset</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareOptOutTransactions(
 			Address sender,
-			bool includeYieldlyAsa = true,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
-			bool includeLotteryContract = true) {
+			bool includeLotteryContract = true,
+			bool includeYieldlyAsa = true) {
 
 			var txParams = mAlgodApi.TransactionParams();
 			var asset = mAlgodApi.GetAssetByID((long)Constant.YieldlyAssetId);
@@ -288,6 +371,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to deposit into the lottery.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="algoAmount">Amount to deposit</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareLotteryDepositTransactions(
 			Address sender,
 			ulong algoAmount) {
@@ -300,6 +389,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to withdraw from the lottery.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="algoAmount">Amount to withdraw</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareLotteryWithdrawTransactions(
 			Address sender,
 			ulong algoAmount) {
@@ -312,6 +407,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to claim rewards from the lottery.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="amount">Amount to claim</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareLotteryClaimRewardTransactions(
 			Address sender,
 			LotteryRewardAmount amount) {
@@ -325,6 +426,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to deposit into the Yieldly staking pool.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="yieldlyAmount">Amount to deposit</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareYieldlyStakingDepositTransactions(
 			Address sender,
 			ulong yieldlyAmount) {
@@ -337,6 +444,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to withdraw from the Yieldly staking pool.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="yieldlyAmount">Amount to withdraw</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareYieldlyStakingWithdrawTransactions(
 			Address sender,
 			ulong yieldlyAmount) {
@@ -349,6 +462,12 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		/// <summary>
+		/// Create a transaction group to claim rewards from the Yieldly staking pool.
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="amount">Amount to claim</param>
+		/// <returns>Transaction group</returns>
 		public virtual TransactionGroup PrepareYieldlyStakingClaimRewardTransactions(
 			Address sender,
 			StakingRewardAmount amount) {
