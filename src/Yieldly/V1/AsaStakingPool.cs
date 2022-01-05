@@ -1,12 +1,12 @@
 ﻿using Algorand;
-using Algorand.V2;
-using Algorand.V2.Model;
+using Algorand.V2.Algod.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Yieldly.V1.Model;
 using Account = Algorand.Account;
-using AccountInformation = Algorand.V2.Model.Account;
+using AccountInformation = Algorand.V2.Algod.Model.Account;
 
 namespace Yieldly.V1 {
 
@@ -29,9 +29,9 @@ namespace Yieldly.V1 {
 		/// <summary>
 		/// Refresh the pool information.
 		/// </summary>
-		public void Refresh() {
+		public async Task RefreshAsync() {
 
-			Application = Client.AlgodApi.GetApplicationByID((long)ApplicationId);
+			Application = await Client.DefaultApi.ApplicationsAsync((int)ApplicationId);
 		}
 
 		/// <summary>
@@ -39,10 +39,11 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="address">Address of account</param>
 		/// <returns>Whether or not the address is opted-in</returns>
-		public virtual bool IsOptedIn(Address address) {
+		public virtual async Task<bool> IsOptedInAsync(Address address) {
 
-			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
-			var appId = (long)ApplicationId;
+			var info = await Client.DefaultApi
+				.AccountsAsync(address.EncodeAsString(), Format.Json);
+			var appId = ApplicationId;
 
 			foreach (var entry in info.AppsLocalState) {
 
@@ -59,9 +60,10 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="address">Address of account</param>
 		/// <returns>Whether or not the address is opted-in</returns>
-		public virtual bool IsOptedInToStakeAsset(Address address) {
+		public virtual async Task<bool> IsOptedInToStakeAssetAsync(Address address) {
 
-			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
+			var info = await Client.DefaultApi
+				.AccountsAsync(address.EncodeAsString(), Format.Json);
 
 			return AccountIsOptedInToAsset(info, StakeAsset.Id);
 		}
@@ -71,9 +73,10 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="address">Address of account</param>
 		/// <returns>Whether or not the address is opted-in</returns>
-		public virtual bool IsOptedInToRewardAsset(Address address) {
+		public virtual async Task<bool> IsOptedInToRewardAssetAsync(Address address) {
 			
-			var info = Client.AlgodApi.AccountInformation(address.EncodeAsString());
+			var info = await Client.DefaultApi
+				.AccountsAsync(address.EncodeAsString(), Format.Json);
 
 			return AccountIsOptedInToAsset(info, RewardAsset.Id);
 		}
@@ -83,7 +86,7 @@ namespace Yieldly.V1 {
 
 			return accountInfo
 				.Assets
-				.Any(s => s.AssetId == (long)assetId);
+				.Any(s => s.AssetId == assetId);
 		}
 
 		/// <summary>
@@ -92,19 +95,20 @@ namespace Yieldly.V1 {
 		/// <param name="address">Address of account</param>
 		/// <param name="refreshPoolInfo">Whether or not the pool information should be refreshed</param>
 		/// <returns>Pool amounts</returns>
-		public FetchAsaStakingAmountsResult FetchAmounts(
+		public virtual async Task<FetchAsaStakingAmountsResult> FetchAmountsAsync(
 			Address address, bool refreshPoolInfo = false) {
 
-			var accountInfo = Client.AlgodApi.AccountInformation(address.EncodeAsString());
+			var info = await Client.DefaultApi
+				.AccountsAsync(address.EncodeAsString(), Format.Json);
 
 			if (refreshPoolInfo) {
-				Refresh();
+				await RefreshAsync();
 			}
 
-			var reward = YieldlyEquation.CalculateAsaStakePoolClaimableAmount(accountInfo, Application);
-			var staked = accountInfo?
+			var reward = YieldlyEquation.CalculateAsaStakePoolClaimableAmount(info, Application);
+			var staked = info?
 				.AppsLocalState?
-				.FirstOrDefault(s => s.Id == (long)ApplicationId)?
+				.FirstOrDefault(s => s.Id == ApplicationId)?
 				.KeyValue?
 				.GetUserAmountValue()
 				.GetValueOrDefault();
@@ -126,45 +130,46 @@ namespace Yieldly.V1 {
 		/// <param name="optInToStakeAsset">Whether or not to opt-in to the stake asset</param>
 		/// <param name="optInToRewardAsset">Whether or not to opt-in to the reward asset</param>
 		/// <returns>Transaction responses</returns>
-		public virtual PostTransactionsResponse[] OptIn(
+		public virtual async Task<PostTransactionsResponse[]> OptInAsync(
 			Account account,
 			bool optInToStakeAsset = true,
-			bool optInToRewardAsset = true) {
+			bool optInToRewardAsset = true,
+			bool wait = true) {
 
 			var results = new List<PostTransactionsResponse>();
 
 			AccountInformation accountInfo = (optInToStakeAsset || optInToRewardAsset)
-				? Client.AlgodApi.AccountInformation(account.Address.EncodeAsString())
+				? await Client.DefaultApi.AccountsAsync(account.Address.EncodeAsString(), Format.Json)
 				: null;
 
 			// If neccessary, opt-in to stake asset
 			if (optInToStakeAsset && !AccountIsOptedInToAsset(accountInfo, StakeAsset.Id)) {
-				var stakeAssetOptInTxs = PrepareStakeAssetOptInTransactions(account.Address);
+				var stakeAssetOptInTxs = await PrepareStakeAssetOptInTransactionsAsync(account.Address);
 				
 				stakeAssetOptInTxs.Sign(account);
 
-				var stakeAssetOptInResult = Client.Submit(stakeAssetOptInTxs, true);
+				var stakeAssetOptInResult = await Client.SubmitAsync(stakeAssetOptInTxs, true);
 
 				results.Add(stakeAssetOptInResult);
 			}
 
 			// If neccessary, opt-in to reward asset
 			if (optInToRewardAsset && !AccountIsOptedInToAsset(accountInfo, RewardAsset.Id)) {
-				var rewardAssetOptInTxs = PrepareRewardAssetOptInTransactions(account.Address);
+				var rewardAssetOptInTxs = await PrepareRewardAssetOptInTransactionsAsync(account.Address);
 
 				rewardAssetOptInTxs.Sign(account);
 
-				var rewardAssetOptInResult = Client.Submit(rewardAssetOptInTxs, true);
+				var rewardAssetOptInResult = await Client.SubmitAsync(rewardAssetOptInTxs, true);
 
 				results.Add(rewardAssetOptInResult);
 			}
 
 			// Finally, opt-in to app
-			var appOptInTxs = PrepareOptInTransactions(account.Address);
+			var appOptInTxs = await PrepareOptInTransactionsAsync(account.Address);
 
 			appOptInTxs.Sign(account);
 
-			var appOptInResult = Client.Submit(appOptInTxs, true);
+			var appOptInResult = await Client.SubmitAsync(appOptInTxs, wait);
 
 			results.Add(appOptInResult);
 
@@ -178,31 +183,32 @@ namespace Yieldly.V1 {
 		/// <param name="optOutOfRewardAsset">Whether or not to opt-out of the reward asset</param>
 		/// <param name="checkRewardAssetBalance">Whether or not to check the balance of reward asset before opting-out</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse OptOut(
+		public virtual async Task<PostTransactionsResponse> OptOutAsync(
 			Account account,
 			bool optOutOfRewardAsset = false,
-			bool checkRewardAssetBalance = true) {
+			bool checkRewardAssetBalance = true,
+			bool wait = true) {
 
-			var rewardAssetId = (long)RewardAsset.Id;
+			var rewardAssetId = RewardAsset.Id;
 
 			if (checkRewardAssetBalance) {
-				var accountInfo = Client.AlgodApi
-					.AccountInformation(account.Address.EncodeAsString());
+				var accountInfo = await Client.DefaultApi
+					.AccountsAsync(account.Address.EncodeAsString(), Format.Json);
 
 				var assetInfo = accountInfo.Assets
-					.FirstOrDefault(s => s.AssetId.GetValueOrDefault() == rewardAssetId);
+					.FirstOrDefault(s => s.AssetId == rewardAssetId);
 
-				if (assetInfo?.Amount.GetValueOrDefault() > 0) {
+				if (assetInfo.Amount > 0) {
 					throw new Exception($"Attempting {RewardAsset.Name} ASA opt-out with non-zero balance.");
 				}
 			}
 
-			var txs = PrepareOptOutTransactions(
+			var txs = await PrepareOptOutTransactionsAsync(
 				account.Address, optOutOfRewardAsset);
 
 			txs.Sign(account);
 
-			return Client.Submit(txs, true);
+			return await Client.SubmitAsync(txs, wait);
 		}
 
 		/// <summary>
@@ -211,16 +217,17 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make deposit</param>
 		/// <param name="stakeAmount">Amount to deposit</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse Deposit(
+		public virtual async Task<PostTransactionsResponse> DepositAsync(
 			Account account,
-			ulong stakeAmount) {
+			ulong stakeAmount,
+			bool wait = true) {
 
-			var txs = PrepareDepositTransactions(
+			var txs = await PrepareDepositTransactionsAsync(
 				account.Address, stakeAmount);
 
 			txs.Sign(account);
 
-			return Client.Submit(txs, true);
+			return await Client.SubmitAsync(txs, wait);
 		}
 
 		/// <summary>
@@ -229,16 +236,17 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make withdrawl</param>
 		/// <param name="withdrawAmount">Amount to withdraw</param>
 		/// <returns></returns>
-		public virtual PostTransactionsResponse Withdraw(
+		public virtual async Task<PostTransactionsResponse> WithdrawAsync(
 			Account account,
-			ulong withdrawAmount) {
+			ulong withdrawAmount,
+			bool wait = true) {
 
-			var txs = PrepareWithdrawTransactions(
+			var txs = await PrepareWithdrawTransactionsAsync(
 				account.Address, withdrawAmount);
 
 			txs.Sign(account);
 
-			return Client.Submit(txs, true);
+			return await Client.SubmitAsync(txs, wait);
 		}
 
 		/// <summary>
@@ -247,16 +255,17 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make claim</param>
 		/// <param name="rewardAmount">Amount to claim</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse ClaimReward(
+		public virtual async Task<PostTransactionsResponse> ClaimRewardAsync(
 			Account account,
-			ulong rewardAmount) {
+			ulong rewardAmount,
+			bool wait = true) {
 
-			var txs = PrepareClaimRewardTransactions(
+			var txs = await PrepareClaimRewardTransactionsAsync(
 				account.Address, rewardAmount);
 
 			txs.Sign(account);
 
-			return Client.Submit(txs, true);
+			return await Client.SubmitAsync(txs, wait);
 		}
 
 		/// <summary>
@@ -264,9 +273,9 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="sender">Address of account</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareOptInTransactions(Address sender) {
+		public virtual async Task<TransactionGroup> PrepareOptInTransactionsAsync(Address sender) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolOptInTransactions(ApplicationId, sender, txParams);
@@ -279,9 +288,9 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="sender">Address of account</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareStakeAssetOptInTransactions(Address sender) {
+		public virtual async Task<TransactionGroup> PrepareStakeAssetOptInTransactionsAsync(Address sender) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAssetOptInTransactions(StakeAsset.Id, sender, txParams);
@@ -294,9 +303,9 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="sender">Address of account</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareRewardAssetOptInTransactions(Address sender) {
+		public virtual async Task<TransactionGroup> PrepareRewardAssetOptInTransactionsAsync(Address sender) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAssetOptInTransactions(RewardAsset.Id, sender, txParams);
@@ -310,14 +319,14 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="optOutOfRewardAsset">Whether or not to opt-out of the asset</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareOptOutTransactions(
+		public virtual async Task<TransactionGroup> PrepareOptOutTransactionsAsync(
 			Address sender, bool optOutOfRewardAsset = false) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			if (optOutOfRewardAsset) {
 				var assetId = RewardAsset.Id;
-				var asset = Client.AlgodApi.GetAssetByID((long)assetId);
+				var asset = await Client.DefaultApi.AssetsAsync(assetId);
 				var closeTo = new Address(asset.Params.Creator);
 
 				return YieldlyTransaction.PrepareAsaStakingPoolOptOutTransactions(
@@ -334,11 +343,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="stakeAmount">Amount to stake</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareDepositTransactions(
+		public virtual async Task<TransactionGroup> PrepareDepositTransactionsAsync(
 			Address sender,
 			ulong stakeAmount) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolDepositTransactions(stakeAmount, this, sender, txParams);
@@ -352,11 +361,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="withdrawAmount">Amount to withdraw</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareWithdrawTransactions(
+		public virtual async Task<TransactionGroup> PrepareWithdrawTransactionsAsync(
 			Address sender,
 			ulong withdrawAmount) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolWithdrawTransactions(withdrawAmount, this, sender, txParams);
@@ -370,11 +379,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="rewardAmount">Amount to claim</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareClaimRewardTransactions(
+		public virtual async Task<TransactionGroup> PrepareClaimRewardTransactionsAsync(
 			Address sender,
 			ulong rewardAmount) {
 
-			var txParams = Client.AlgodApi.TransactionParams();
+			var txParams = await Client.DefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolClaimRewardTransactions(

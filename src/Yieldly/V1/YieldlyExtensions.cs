@@ -1,10 +1,8 @@
-﻿using Algorand.V2.Model;
+﻿using Algorand.V2.Algod.Model;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Yieldly.V1.Model;
 
 namespace Yieldly.V1 {
@@ -40,10 +38,10 @@ namespace Yieldly.V1 {
 		public static SimpleAsset ToSimpleAsset(this Asset asset) {
 
 			return new SimpleAsset {
-				Id = (ulong)asset.Index.GetValueOrDefault(),
+				Id = (ulong)asset.Index,
 				Name = asset.Params.Name,
 				UnitName = asset.Params.UnitName,
-				Decimals = (int)asset.Params.Decimals.GetValueOrDefault()
+				Decimals = (int)asset.Params.Decimals
 			};
 		}
 		
@@ -104,4 +102,5 @@ namespace Yieldly.V1 {
 		}
 
 	}
+
 }

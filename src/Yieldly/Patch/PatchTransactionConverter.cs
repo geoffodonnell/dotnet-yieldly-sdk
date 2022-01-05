@@ -7,6 +7,13 @@ using System.Linq;
 
 namespace Yieldly.Patch {
 
+	/// <summary>
+	/// Performs serialization of <see cref="PatchTransaction"/> objects.
+	/// </summary>
+	/// <remarks>
+	/// This class is deprecated and will be removed in a future release.
+	/// </remarks>
+	[Obsolete]
 	public class PatchTransactionConverter : JsonConverter {
 
 		public override bool CanConvert(Type objectType) {

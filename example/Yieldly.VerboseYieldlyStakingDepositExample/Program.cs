@@ -1,13 +1,15 @@
 ﻿using Algorand;
+using Algorand.V2;
 using System;
 using System.Configuration;
+using System.Threading.Tasks;
 using Yieldly.V1;
 
 namespace Yieldly.VerboseYieldlyStakingDepositExample {
 
 	public class Program {
 
-		static void Main(string[] args) {
+		public static async Task Main(string[] args) {
 
 			var settings = ConfigurationManager.AppSettings;
 			var mnemonic = settings.Get("Account.Mnemonic");
@@ -19,9 +21,10 @@ namespace Yieldly.VerboseYieldlyStakingDepositExample {
 			var account = new Account(mnemonic);
 
 			// Initialize the client
-			var algodApi = new Algorand.V2.AlgodApi(
-				Constant.AlgodMainnetHost, String.Empty);
-			var client = new YieldlyClient(algodApi);
+			var url = Constant.AlgodMainnetHost;
+			var token = String.Empty;
+			var httpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
+			var client = new YieldlyClient(httpClient, url);
 
 			var amountToDeposit = YieldlyUtils.YieldlyToMicroyieldly(1000.0);
 
@@ -31,7 +34,7 @@ namespace Yieldly.VerboseYieldlyStakingDepositExample {
 			try {
 				//var result = client.YieldlyStakingDeposit(account, amountToDeposit);
 
-				var txParams = algodApi.TransactionParams();
+				var txParams = await client.FetchTransactionParamsAsync();
 
 				var stakingDepositTxGroup = YieldlyTransaction
 					.PrepareYieldlyStakingDepositTransactions(
@@ -51,7 +54,7 @@ namespace Yieldly.VerboseYieldlyStakingDepositExample {
 					}
 				}
 
-				var stakingDepositResult = client.Submit(stakingDepositTxGroup);
+				var stakingDepositResult = await client.SubmitAsync(stakingDepositTxGroup);
 
 				Console.WriteLine($"Yieldly staking deposit complete, transaction ID: {stakingDepositResult.TxId}");
 

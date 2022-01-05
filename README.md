@@ -3,13 +3,11 @@
 [![NuGet version](https://badge.fury.io/nu/yieldly.svg)](https://badge.fury.io/nu/yieldly)
 [![Donate Algo](https://img.shields.io/badge/Donate-ALGO-000000.svg?style=flat)](https://algoexplorer.io/address/EJMR773OGLFAJY5L2BCZKNA5PXLDJOWJK4ED4XDYTYH57CG3JMGQGI25DQ)
 
-Yieldly .NET SDK
-
 # Overview
 This library provides access to the [Yieldly](https://app.yieldly.finance/) No Loss Lottery and Staking contracts on the Algorand blockchain.
 
 ## Stake pools
-Arbitrary stake pools are now supported. Use the `FetchStakingPool(...)` method on `YieldlyClient` to retrieve pool, this object can be used by following the same pattern as the client itself. That is, either pass the account instance to a method, which will submit signed transactions to complete an operation, or use the `Prepare...` methods to create a transaction group and handle signing the applicable transactions (see the [example](/example) directory for sample implementations).
+Arbitrary stake pools are now supported. Use the `FetchStakingPoolAsync(...)` method on `YieldlyClient` to retrieve pool, this object can be used by following the same pattern as the client itself. That is, either pass the account instance to a method, which will submit signed transactions to complete an operation, or use the `Prepare...` methods to create a transaction group and handle signing the applicable transactions (see the [example](/example) directory for sample implementations).
 
 # Installation
 Releases are available at [nuget.org](https://www.nuget.org/packages/Yieldly/).
@@ -34,14 +32,12 @@ Deposit ALGO in the no loss lottery.
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Deposit 10 ALGO in the no loss lottery
 var amountToDeposit = Utils.AlgosToMicroalgos(10.0);
 
-var result = client.LotteryDeposit(account, amountToDeposit);
+var result = await client.LotteryDepositAsync(account, amountToDeposit);
 ```
 
 ## Lottery Withdrawal
@@ -49,15 +45,13 @@ Withdraw ALGO participating in the no loss lottery.
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Fetch all Yieldly amounts
-var amounts = client.FetchAmounts(account.Address);
+var amounts = await client.FetchAmountsAsync(account.Address);
 
 // Withdraw all ALGO currently deposited in the no loss lottery
-var result = client.LotteryWithdraw(account, amounts.AlgoInLottery);
+var result = await client.LotteryWithdrawAsync(account, amounts.AlgoInLottery);
 ```
 
 ## Lottery Reward Claim
@@ -65,15 +59,13 @@ Claim reward from lottery participation. Note, this does not include winning the
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Fetch all Yieldly amounts
-var amounts = client.FetchAmounts(account.Address);
+var amounts = await client.FetchAmountsAsync(account.Address);
 
 // Claim current Yieldy rewards from lottery
-var result = client.LotteryClaimReward(account, amounts.LotteryReward.Yieldly);
+var result = await client.LotteryClaimRewardAsync(account, amounts.LotteryReward.Yieldly);
 ```
 
 ## Staking Deposit
@@ -81,14 +73,12 @@ Deposit YLDY in the staking pool.
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Deposit 1000 YLDY in the Yieldly staking pool
 var amountToDeposit = YieldlyUtils.YieldlyToMicroyieldly(1000.0);
 
-var result = client.YieldlyStakingDeposit(account, amountToDeposit);
+var result = await client.YieldlyStakingDepositAsync(account, amountToDeposit);
 ```
 
 ## Staking Withdrawal
@@ -96,15 +86,13 @@ Withdraw YLDY in the staking pool.
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Fetch all Yieldly amounts
-var amounts = client.FetchAmounts(account.Address);
+var amounts = await client.FetchAmountsAsync(account.Address);
 
 // Withdraw all YLDY currently deposited in the Yieldly staking pool
-var result = client.YieldlyStakingWithdraw(account, amounts.YieldlyStaked);
+var result = await client.YieldlyStakingWithdrawAsync(account, amounts.YieldlyStaked);
 ```
 
 ## Staking Reward Claim
@@ -112,15 +100,13 @@ Claim rewards from staking pool participation.
 
 ```C#
 // Initialize the client
-var algodApi = new Algorand.V2.AlgodApi(
-	Constant.AlgodMainnetHost, String.Empty);
-var client = new YieldlyClient(algodApi);
+var client = new YieldlyClient();
 
 // Fetch all Yieldly amounts
-var amounts = client.FetchAmounts(account.Address);
+var amounts = await client.FetchAmountsAsync(account.Address);
 
 // Withdraw all ALGO and YLDY currently available as rewards from Yieldly staking pool participation
-var result = client.YieldyStakingClaimReward(account, amounts.StakingReward);
+var result = await client.YieldyStakingClaimRewardAsync(account, amounts.StakingReward);
 ```
 
 # Examples

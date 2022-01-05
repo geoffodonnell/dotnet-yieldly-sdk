@@ -1,13 +1,15 @@
 ﻿using Algorand;
+using Algorand.V2;
 using System;
 using System.Configuration;
+using System.Threading.Tasks;
 using Yieldly.V1;
 
 namespace Yieldly.VerboseYieldlyStakingWithdrawExample {
 
 	public class Program {
 
-		static void Main(string[] args) {
+		public static async Task Main(string[] args) {
 
 			var settings = ConfigurationManager.AppSettings;
 			var mnemonic = settings.Get("Account.Mnemonic");
@@ -19,16 +21,17 @@ namespace Yieldly.VerboseYieldlyStakingWithdrawExample {
 			var account = new Account(mnemonic);
 
 			// Initialize the client
-			var algodApi = new Algorand.V2.AlgodApi(
-				Constant.AlgodMainnetHost, String.Empty);
-			var client = new YieldlyClient(algodApi);
+			var url = Constant.AlgodMainnetHost;
+			var token = String.Empty;
+			var httpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
+			var client = new YieldlyClient(httpClient, url);
 
 			// Fetch all Yieldly amounts
-			var amounts = client.FetchAmounts(account.Address);
+			var amounts = await client.FetchAmountsAsync(account.Address);
 
 			// Withdraw all YLDY currently deposited in the Yieldly staking pool
 			try {
-				var txParams = algodApi.TransactionParams();
+				var txParams = await client.FetchTransactionParamsAsync();
 
 				var stakingWithdrawTxGroup = YieldlyTransaction
 					.PrepareYieldlyStakingWithdrawTransactions(
@@ -48,7 +51,7 @@ namespace Yieldly.VerboseYieldlyStakingWithdrawExample {
 					}
 				}
 
-				var stakingWithdrawResult = client.Submit(stakingWithdrawTxGroup);
+				var stakingWithdrawResult = await client.SubmitAsync(stakingWithdrawTxGroup);
 
 				Console.WriteLine($"Yieldly staking withdraw complete, transaction ID: {stakingWithdrawResult.TxId}");
 

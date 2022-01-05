@@ -1,13 +1,15 @@
 ﻿using Algorand;
+using Algorand.V2;
 using System;
 using System.Configuration;
+using System.Threading.Tasks;
 using Yieldly.V1;
 
 namespace Yieldly.VerboseLotteryClaimRewardExample {
 
 	public class Program {
 
-		static void Main(string[] args) {
+		public static async Task Main(string[] args) {
 
 			var settings = ConfigurationManager.AppSettings;
 			var mnemonic = settings.Get("Account.Mnemonic");
@@ -19,17 +21,18 @@ namespace Yieldly.VerboseLotteryClaimRewardExample {
 			var account = new Account(mnemonic);
 
 			// Initialize the client
-			var algodApi = new Algorand.V2.AlgodApi(
-				Constant.AlgodMainnetHost, String.Empty);
-			var client = new YieldlyClient(algodApi);
+			var url = Constant.AlgodMainnetHost;
+			var token = String.Empty;
+			var httpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
+			var client = new YieldlyClient(httpClient, url);
 
 			// Fetch all Yieldly amounts
-			var amounts = client.FetchAmounts(account.Address);
+			var amounts = await client.FetchAmountsAsync(account.Address);
 
 			// Claim current Yieldy rewards from lottery
 			try {
 
-				var txParams = algodApi.TransactionParams();
+				var txParams = await client.FetchTransactionParamsAsync();
 
 				var lotteryClaimTxGroup = YieldlyTransaction
 					.PrepareLotteryClaimRewardTransactions(
@@ -49,7 +52,7 @@ namespace Yieldly.VerboseLotteryClaimRewardExample {
 					}
 				}
 
-				var lotteryClaimResult = client.Submit(lotteryClaimTxGroup);
+				var lotteryClaimResult = await client.SubmitAsync(lotteryClaimTxGroup);
 
 				Console.WriteLine($"Lottery reward claim complete, transaction ID: {lotteryClaimResult.TxId}");
 

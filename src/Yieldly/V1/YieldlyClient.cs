@@ -1,9 +1,12 @@
 ﻿using Algorand;
 using Algorand.V2;
-using Algorand.V2.Model;
+using Algorand.V2.Algod;
+using Algorand.V2.Algod.Model;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Yieldly.V1.Model;
 using Account = Algorand.Account;
 
@@ -11,24 +14,53 @@ namespace Yieldly.V1 {
 
 	public class YieldlyClient {
 
-		private readonly AlgodApi mAlgodApi;
+		protected readonly DefaultApi mDefaultApi;
+		protected readonly HttpClient mHttpClient;
 
-		internal AlgodApi AlgodApi { get => mAlgodApi; }
+		public HttpClient HttpClient { get => mHttpClient; }
+
+		public DefaultApi DefaultApi { get => mDefaultApi; }
 
 		/// <summary>
 		/// Construct a new instance which connects to the default node
 		/// </summary>
 		public YieldlyClient() :
-			this(new AlgodApi(Constant.AlgodMainnetHost, String.Empty)) { }
+			this(Constant.AlgodMainnetHost, String.Empty) { }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="url">Algorand node URL</param>
+		/// <param name="token">Algorand node API key</param>
+		public YieldlyClient(string url, string token) {
+
+			mHttpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
+			mDefaultApi = new DefaultApi(mHttpClient) {
+				BaseUrl = url
+			};
+		}
 
 		/// <summary>
 		/// Construct a new instance
 		/// </summary>
-		/// <param name="algodApi">Algod API connection</param>
+		/// <param name="httpClient">HttpClient instance</param>
+		/// <param name="url">Algorand node URL</param>
 		public YieldlyClient(
-			AlgodApi algodApi) {
+			HttpClient httpClient, string url) {
 
-			mAlgodApi = algodApi;
+			mHttpClient = httpClient;
+			mDefaultApi = new DefaultApi(mHttpClient) {
+				BaseUrl = url
+			};
+		}
+
+		/// <summary>
+		/// Retrieve the current network parameters.
+		/// </summary>
+		/// <returns>Current network parameters</returns>
+		public virtual async Task<TransactionParametersResponse> FetchTransactionParamsAsync() {
+
+			return await mDefaultApi.ParamsAsync();
 		}
 
 		/// <summary>
@@ -37,10 +69,10 @@ namespace Yieldly.V1 {
 		/// <param name="transactionGroup">Signed transaction group</param>
 		/// <param name="wait">Wait for confirmation</param>
 		/// <returns>Transaction reponse</returns>
-		public virtual PostTransactionsResponse Submit(
+		public virtual async Task<PostTransactionsResponse> SubmitAsync(
 			TransactionGroup transactionGroup, bool wait = true) {
 
-			return transactionGroup.Submit(mAlgodApi, wait);
+			return await transactionGroup.SubmitAsync(mDefaultApi, wait);
 		}
 
 		/// <summary>
@@ -48,11 +80,11 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="address">Address of account</param>
 		/// <returns>Application amounts</returns>
-		public virtual FetchAmountsResult FetchAmounts(Address address) {
+		public virtual async Task<FetchAmountsResult> FetchAmountsAsync(Address address) {
 
-			var accountInfo = mAlgodApi.AccountInformation(address.EncodeAsString());
-			var lotteryApp = mAlgodApi.GetApplicationByID((long)Constant.LotteryAppId);
-			var stakingApp = mAlgodApi.GetApplicationByID((long)Constant.StakingAppId);
+			var accountInfo = await mDefaultApi.AccountsAsync(address.EncodeAsString(), Format.Json);
+			var lotteryApp = await mDefaultApi.ApplicationsAsync((int)Constant.LotteryAppId);
+			var stakingApp = await mDefaultApi.ApplicationsAsync((int)Constant.StakingAppId);
 
 			var lotteryReward = YieldlyEquation.CalculateLotteryClaimableAmount(accountInfo, lotteryApp);
 			var stakingReward = YieldlyEquation.CalculateStakingClaimableAmount(accountInfo, stakingApp);
@@ -81,10 +113,10 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="appId">Application ID of the staking pool</param>
 		/// <returns>Stake pool</returns>
-		public virtual AsaStakingPool FetchStakingPool(ulong appId) {
+		public virtual async Task<AsaStakingPool> FetchStakingPoolAsync(ulong appId) {
 
 			var lsigSignature = Contract.GetAsaStakePoolLogicsigSignature(appId);
-			var poolApp = mAlgodApi.GetApplicationByID((long)appId);
+			var poolApp = await mDefaultApi.ApplicationsAsync((int)appId);
 			var globalState = poolApp.Params.GlobalState
 				.ToDictionary(s => YieldlyUtils.Base64Decode(s.Key), s => s.Value);
 
@@ -104,7 +136,7 @@ namespace Yieldly.V1 {
 				return null;
 			}
 
-			var stakeAsset = mAlgodApi.GetAssetByID((long)stakeAssetId);
+			var stakeAsset = await mDefaultApi.AssetsAsync(stakeAssetId.Value);
 
 			ulong? rewardAssetId = null;
 
@@ -114,7 +146,7 @@ namespace Yieldly.V1 {
 				return null;
 			}
 
-			var rewardAsset = mAlgodApi.GetAssetByID((long)rewardAssetId);
+			var rewardAsset = await mDefaultApi.AssetsAsync(rewardAssetId.Value);
 
 			return new AsaStakingPool { 
 				Client = this,
@@ -136,14 +168,14 @@ namespace Yieldly.V1 {
 		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
 		/// <param name="includeYieldlyAsa">Whether or not to opt-in to the Yieldly asset</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse OptIn(
+		public virtual async Task<PostTransactionsResponse> OptInAsync(
 			Account account,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
 			bool includeLotteryContract = true,
 			bool includeYieldlyAsa = true) {
 
-			var txs = PrepareOptInTransactions(
+			var txs = await PrepareOptInTransactionsAsync(
 				account.Address,
 				includeYieldlyAsa,
 				includeProxyContract,
@@ -152,7 +184,7 @@ namespace Yieldly.V1 {
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -165,7 +197,7 @@ namespace Yieldly.V1 {
 		/// <param name="includeYieldlyAsa">Whether or not to opt-out of the Yieldly asset</param>
 		/// <param name="checkAssetBalance">Whether or not to check the balance before opting-out</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse OptOut(
+		public virtual async Task<PostTransactionsResponse> OptOutAsync(
 			Account account,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
@@ -173,21 +205,25 @@ namespace Yieldly.V1 {
 			bool includeYieldlyAsa = false,
 			bool checkAssetBalance = true) {
 
-			var yieldlyAssetId = (long)Constant.YieldlyAssetId;
+			var yieldlyAssetId = Constant.YieldlyAssetId;
 
 			if (checkAssetBalance) {
-				var accountInfo = mAlgodApi
-					.AccountInformation(account.Address.EncodeAsString());
+				var accountInfo = await mDefaultApi
+					.AccountsAsync(account.Address.EncodeAsString(), Format.Json);
 
 				var assetInfo = accountInfo.Assets
-					.FirstOrDefault(s => s.AssetId.GetValueOrDefault() == yieldlyAssetId);
+					.FirstOrDefault(s => s.AssetId == yieldlyAssetId);
 
-				if (assetInfo?.Amount.GetValueOrDefault() > 0) {
+				if (assetInfo == null) {
+					throw new Exception("Attempting Yieldly ASA opt-out; account has not opted-in to Yieldly ASA.");
+				}
+
+				if (assetInfo.Amount > 0) {
 					throw new Exception("Attempting Yieldly ASA opt-out with non-zero balance.");
 				}
 			}
 
-			var txs = PrepareOptOutTransactions(
+			var txs = await PrepareOptOutTransactionsAsync(
 				account.Address,
 				includeYieldlyAsa,
 				includeProxyContract,
@@ -196,7 +232,7 @@ namespace Yieldly.V1 {
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -205,16 +241,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make deposit</param>
 		/// <param name="algoAmount">Amount to deposit</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse LotteryDeposit(
+		public virtual async Task<PostTransactionsResponse> LotteryDepositAsync(
 			Account account,
 			ulong algoAmount) {
 
-			var txs = PrepareLotteryDepositTransactions(
+			var txs = await PrepareLotteryDepositTransactionsAsync(
 				account.Address, algoAmount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -223,16 +259,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make withdrawl</param>
 		/// <param name="algoAmount">Amount to withdraw</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse LotteryWithdraw(
+		public virtual async Task<PostTransactionsResponse> LotteryWithdrawAsync(
 			Account account,
 			ulong algoAmount) {
 
-			var txs = PrepareLotteryWithdrawTransactions(
+			var txs = await PrepareLotteryWithdrawTransactionsAsync(
 				account.Address, algoAmount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -241,16 +277,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make claim</param>
 		/// <param name="amount">Amount to claim</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse LotteryClaimReward(
+		public virtual async Task<PostTransactionsResponse> LotteryClaimRewardAsync(
 			Account account,
 			LotteryRewardAmount amount) {
 
-			var txs = PrepareLotteryClaimRewardTransactions(
+			var txs = await PrepareLotteryClaimRewardTransactionsAsync(
 				account.Address, amount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -259,16 +295,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make deposit</param>
 		/// <param name="yieldlyAmount">Amount to deposit</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse YieldlyStakingDeposit(
+		public virtual async Task<PostTransactionsResponse> YieldlyStakingDepositAsync(
 			Account account,
 			ulong yieldlyAmount) {
 
-			var txs = PrepareYieldlyStakingDepositTransactions(
+			var txs = await PrepareYieldlyStakingDepositTransactionsAsync(
 				account.Address, yieldlyAmount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -277,16 +313,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make withdrawl</param>
 		/// <param name="yieldlyAmount">Amount to withdraw</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse YieldlyStakingWithdraw(
+		public virtual async Task<PostTransactionsResponse> YieldlyStakingWithdrawAsync(
 			Account account,
 			ulong yieldlyAmount) {
 
-			var txs = PrepareYieldlyStakingWithdrawTransactions(
+			var txs = await PrepareYieldlyStakingWithdrawTransactionsAsync(
 				account.Address, yieldlyAmount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -295,16 +331,16 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to make claim</param>
 		/// <param name="amount">Amount to claim</param>
 		/// <returns>Transaction response</returns>
-		public virtual PostTransactionsResponse YieldyStakingClaimReward(
+		public virtual async Task<PostTransactionsResponse> YieldyStakingClaimRewardAsync(
 			Account account,
 			StakingRewardAmount amount) {
 
-			var txs = PrepareYieldlyStakingClaimRewardTransactions(
+			var txs = await PrepareYieldlyStakingClaimRewardTransactionsAsync(
 				account.Address, amount);
 
 			txs.Sign(account);
 
-			return Submit(txs, true);
+			return await SubmitAsync(txs, true);
 		}
 
 		/// <summary>
@@ -316,14 +352,14 @@ namespace Yieldly.V1 {
 		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
 		/// <param name="includeYieldlyAsa">Whether or not to opt-in to Yieldly asset</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareOptInTransactions(
+		public virtual async Task<TransactionGroup> PrepareOptInTransactionsAsync(
 			Address sender,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
 			bool includeLotteryContract = true,
 			bool includeYieldlyAsa = true) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareOptInTransactions(
@@ -346,15 +382,15 @@ namespace Yieldly.V1 {
 		/// <param name="includeLotteryContract">Whether or not to opt-out of the lottery contract</param>
 		/// <param name="includeYieldlyAsa">Whether or not to opt-out of the Yieldly asset</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareOptOutTransactions(
+		public virtual async Task<TransactionGroup> PrepareOptOutTransactionsAsync(
 			Address sender,
 			bool includeProxyContract = true,
 			bool includeStakingContract = true,
 			bool includeLotteryContract = true,
 			bool includeYieldlyAsa = true) {
 
-			var txParams = mAlgodApi.TransactionParams();
-			var asset = mAlgodApi.GetAssetByID((long)Constant.YieldlyAssetId);
+			var txParams = await mDefaultApi.ParamsAsync();
+			var asset = await mDefaultApi.AssetsAsync(Constant.YieldlyAssetId);
 
 			var closeTo = new Address(asset.Params.Creator);
 
@@ -377,11 +413,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="algoAmount">Amount to deposit</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareLotteryDepositTransactions(
+		public virtual async Task<TransactionGroup> PrepareLotteryDepositTransactionsAsync(
 			Address sender,
 			ulong algoAmount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryDepositTransactions(algoAmount, sender, txParams);
@@ -395,11 +431,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="algoAmount">Amount to withdraw</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareLotteryWithdrawTransactions(
+		public virtual async Task<TransactionGroup> PrepareLotteryWithdrawTransactionsAsync(
 			Address sender,
 			ulong algoAmount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryWithdrawTransactions(algoAmount, sender, txParams);
@@ -413,11 +449,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="amount">Amount to claim</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareLotteryClaimRewardTransactions(
+		public virtual async Task<TransactionGroup> PrepareLotteryClaimRewardTransactionsAsync(
 			Address sender,
 			LotteryRewardAmount amount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryClaimRewardTransactions(
@@ -432,11 +468,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="yieldlyAmount">Amount to deposit</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareYieldlyStakingDepositTransactions(
+		public virtual async Task<TransactionGroup> PrepareYieldlyStakingDepositTransactionsAsync(
 			Address sender,
 			ulong yieldlyAmount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingDepositTransactions(yieldlyAmount, sender, txParams);
@@ -450,11 +486,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="yieldlyAmount">Amount to withdraw</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareYieldlyStakingWithdrawTransactions(
+		public virtual async Task<TransactionGroup> PrepareYieldlyStakingWithdrawTransactionsAsync(
 			Address sender,
 			ulong yieldlyAmount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingWithdrawTransactions(yieldlyAmount, sender, txParams);
@@ -468,11 +504,11 @@ namespace Yieldly.V1 {
 		/// <param name="sender">Address of account</param>
 		/// <param name="amount">Amount to claim</param>
 		/// <returns>Transaction group</returns>
-		public virtual TransactionGroup PrepareYieldlyStakingClaimRewardTransactions(
+		public virtual async Task<TransactionGroup> PrepareYieldlyStakingClaimRewardTransactionsAsync(
 			Address sender,
 			StakingRewardAmount amount) {
 
-			var txParams = mAlgodApi.TransactionParams();
+			var txParams = await mDefaultApi.ParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingClaimRewardTransactions(

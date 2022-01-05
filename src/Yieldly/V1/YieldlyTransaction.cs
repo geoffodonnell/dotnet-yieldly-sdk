@@ -1,9 +1,9 @@
 ﻿using Algorand;
-using Algorand.V2.Model;
+using Algorand.V2.Algod.Model;
+using Algorand.V2.Indexer.Model;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Yieldly.V1.Model;
 using Transaction = Algorand.Transaction;
 
@@ -12,6 +12,17 @@ namespace Yieldly.V1 {
 	public static class YieldlyTransaction {
 
 		#region Opt In/Out
+
+		/// <summary>
+		/// Prepare a transaction group to opt-in to contracts and the Yieldly ASA
+		/// </summary>
+		/// <param name="sender">Account address</param>
+		/// <param name="txParams">Network parameters</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-in to the Yieldly ASA</param>
+		/// <param name="includeProxyContract">Whether or not to opt-in to the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-in to the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
+		/// <returns></returns>
 		public static TransactionGroup PrepareOptInTransactions(
 			Address sender,
 			TransactionParametersResponse txParams,
@@ -67,6 +78,17 @@ namespace Yieldly.V1 {
 			return new TransactionGroup(transactions);
 		}
 
+		/// <summary>
+		/// Prepare a transaction group to opt-out of contracts and the Yieldly ASA
+		/// </summary>
+		/// <param name="closeTo">Address to send remaining Yieldly</param>
+		/// <param name="sender">Account address</param>
+		/// <param name="txParams">Network parameters</param>
+		/// <param name="includeYieldlyAsa">Whether or not to opt-out of the Yieldly ASA</param>
+		/// <param name="includeProxyContract">Whether or not to opt-out of the proxy contract</param>
+		/// <param name="includeStakingContract">Whether or not to opt-out of the staking contract</param>
+		/// <param name="includeLotteryContract">Whether or not to opt-out of the lottery contract</param>
+		/// <returns></returns>
 		public static TransactionGroup PrepareOptOutTransactions(
 			Address closeTo,
 			Address sender,
@@ -143,7 +165,7 @@ namespace Yieldly.V1 {
 				}
 
 				transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
-					sender, sender, (long)assetId, 0, txParams, closeTo: closeTo));
+					sender, sender, assetId, 0, txParams, closeTo: closeTo));
 			}
 
 			return new TransactionGroup(transactions);
@@ -151,6 +173,7 @@ namespace Yieldly.V1 {
 		#endregion
 
 		#region Lottery Transactions
+
 		public static TransactionGroup PrepareLotteryDepositTransactions(			
 			ulong algoAmount,
 			Address sender,
@@ -284,6 +307,7 @@ namespace Yieldly.V1 {
 		#endregion
 
 		#region Yieldly Staking
+
 		public static TransactionGroup PrepareYieldlyStakingDepositTransactions(
 			ulong yieldlyAmount,
 			Address sender,
@@ -443,6 +467,7 @@ namespace Yieldly.V1 {
 
 			return result;
 		}
+
 		#endregion
 
 		#region ASA Staking
@@ -482,7 +507,7 @@ namespace Yieldly.V1 {
 			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
 				sender,
 				escrowAddress,
-				(long)pool.StakeAsset.Id,
+				pool.StakeAsset.Id,
 				stakeAmount,
 				txParams));
 
@@ -530,7 +555,7 @@ namespace Yieldly.V1 {
 			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
 				escrowAddress,
 				sender,
-				(long)pool.StakeAsset.Id,
+				pool.StakeAsset.Id,
 				withdrawAmount,
 				txParams);
 
@@ -584,7 +609,7 @@ namespace Yieldly.V1 {
 			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
 				escrowAddress,
 				sender,
-				(long)pool.RewardAsset.Id,
+				pool.RewardAsset.Id,
 				rewardAmount,
 				txParams);
 
@@ -599,16 +624,18 @@ namespace Yieldly.V1 {
 
 			return result;
 		}
+
 		#endregion
 
 		#region Utility Transactions
+
 		public static TransactionGroup PrepareAssetOptInTransactions(
 			ulong assetId,
 			Address sender,
 			TransactionParametersResponse txParams) {
 
 			var transactions = new List<Transaction>() {
-				Algorand.Utils.GetAssetOptingInTransaction(sender, (long)assetId, txParams)
+				Algorand.Utils.GetAssetOptingInTransaction(sender, assetId, txParams)
 			};	
 
 			return new TransactionGroup(transactions);
@@ -627,11 +654,12 @@ namespace Yieldly.V1 {
 
 			var transactions = new List<Transaction>(){
 				Algorand.Utils.GetTransferAssetTransaction(
-					sender, sender, (long)assetId, 0, txParams, closeTo: closeTo)
+					sender, sender, assetId, 0, txParams, closeTo: closeTo)
 			};			
 
 			return new TransactionGroup(transactions);
 		}
+
 		#endregion
 
 	}

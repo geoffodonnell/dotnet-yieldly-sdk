@@ -1,10 +1,11 @@
 ﻿using Algorand;
-using Algorand.V2;
-using Algorand.V2.Model;
+using Algorand.V2.Algod;
+using Algorand.V2.Algod.Model;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Yieldly.Patch;
+using System.Threading.Tasks;
 using Account = Algorand.Account;
 using LogicsigSignature = Algorand.LogicsigSignature;
 using SignedTransaction = Algorand.SignedTransaction;
@@ -14,18 +15,28 @@ namespace Yieldly.V1.Model {
 
 	public class TransactionGroup {
 
+		/// <summary>
+		/// The transactions in the group
+		/// </summary>
 		public virtual Transaction[] Transactions { get; }
 
+		/// <summary>
+		/// 
+		/// </summary>
 		public virtual SignedTransaction[] SignedTransactions { get; }
 
+		/// <summary>
+		/// Whether or not all the transactions in the group have been signed
+		/// </summary>
 		public virtual bool IsSigned => SignedTransactions.All(s => s != null);
 
-		public TransactionGroup(IEnumerable<Transaction> transactions)
-			: this(transactions, true) { }
+		/// <summary>
+		/// Create a new <see cref="TransactionGroup"/> 
+		/// </summary>
+		/// <param name="transactions">The transactions in the group</param>
+		public TransactionGroup(IEnumerable<Transaction> transactions) {
 
-		public TransactionGroup(IEnumerable<Transaction> transactions, bool usePatch) {
-
-			Transactions = transactions.Select(s => usePatch ? PatchTransaction.Create(s) : s).ToArray();
+			Transactions = transactions.ToArray();
 			SignedTransactions = new SignedTransaction[Transactions.Length];
 
 			var gid = TxGroup.ComputeGroupID(Transactions);
@@ -34,6 +45,18 @@ namespace Yieldly.V1.Model {
 				tx.AssignGroupID(gid);
 			}
 		}
+
+		/// <summary>
+		/// Create a new <see cref="TransactionGroup"/> 
+		/// </summary>
+		/// <param name="transactions">The transactions in the group</param>
+		/// <param name="usePatch">Whether or not to use the patch -- ignored.</param>
+		/// <remarks>
+		/// This constructor is deprecated and will be removed in a future release.
+		/// </remarks>
+		[Obsolete]
+		public TransactionGroup(IEnumerable<Transaction> transactions, bool usePatch)
+			: this(transactions) { }
 
 		public virtual void Sign(Account account) {
 
@@ -52,8 +75,8 @@ namespace Yieldly.V1.Model {
 			PerformSign(account.Address, s => account.SignTransaction(s));
 		}
 
-		internal PostTransactionsResponse Submit(AlgodApi algodApi, bool wait = false) {
-			
+		internal async Task<PostTransactionsResponse> SubmitAsync(DefaultApi client, bool wait = true) {
+
 			if (!IsSigned) {
 				throw new Exception(
 					"Transaction group has not been signed.");
@@ -62,16 +85,20 @@ namespace Yieldly.V1.Model {
 			var bytes = new List<byte>();
 
 			foreach (var tx in SignedTransactions) {
-				 bytes.AddRange(Algorand.Encoder.EncodeToMsgPack(tx));
+				bytes.AddRange(Algorand.Encoder.EncodeToMsgPack(tx));
 			}
-			
-			var response = algodApi.RawTransactionWithHttpInfo(bytes.ToArray());
+
+			PostTransactionsResponse response = null;
+
+			using (var payload = new MemoryStream(bytes.ToArray())) {
+				response = await client.TransactionsAsync(payload);
+			}
 
 			if (wait) {
-				Algorand.Utils.WaitTransactionToComplete(algodApi, response.Data.TxId);
+				await Algorand.Utils.WaitTransactionToComplete(client, response.TxId);
 			}
 
-			return response.Data;
+			return response;
 		}
 
 		protected virtual void PerformSign(
@@ -80,7 +107,7 @@ namespace Yieldly.V1.Model {
 			if (Transactions == null || Transactions.Length == 0) {
 				return;
 			}
-			
+
 			for (var i = 0; i < Transactions.Length; i++) {
 				if (Transactions[i].sender.Equals(sender)) {
 					var signed = action(Transactions[i]);
@@ -100,7 +127,7 @@ namespace Yieldly.V1.Model {
 				}
 
 				throw;
-			}			
+			}
 		}
 
 	}
