@@ -7,20 +7,20 @@
 		<PackageProjectUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</PackageProjectUrl>
 		<Authors>Geoff O'Donnell</Authors>
 		<RepositoryUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</RepositoryUrl>
+		<UserSecretsId>d27841c1-f33c-4afb-b978-4bea9597ab40</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Patch\langspec.json" />
     <None Remove="V1\asc.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Patch\langspec.json" />
     <EmbeddedResource Include="V1\asc.json" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Algorand" Version="0.2.1" />
+    <PackageReference Include="Algorand.Common" Version="0.0.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

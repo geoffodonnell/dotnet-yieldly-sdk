@@ -1,10 +1,10 @@
 ﻿using Algorand;
+using Algorand.Common.Asc;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Yieldly.V1.Asc;
 
 namespace Yieldly.V1 {
 
@@ -33,8 +33,7 @@ namespace Yieldly.V1 {
 			}
 		}
 
-		public static LogicsigSignature GetAsaStakePoolLogicsigSignature(
-			ulong appId, bool usePatch = true) {
+		public static LogicsigSignature GetAsaStakePoolLogicsigSignature(ulong appId) {
 
 			Initialize();
 
@@ -44,7 +43,7 @@ namespace Yieldly.V1 {
 					{ "app_id", appId }
 				});
 
-			return GetLogicsigSignature(bytes, usePatch);
+			return GetLogicsigSignature(bytes);
 		}
 
 		private static void Initialize() {
@@ -86,16 +85,12 @@ namespace Yieldly.V1 {
 
 			mEscrowLogicSig = mContracts.Contracts[mEscrowLogicSigName] as LogicSigContract;
 			mAsaStakePoolLogicSigDef = mContracts.Contracts[mAsaStakePoolLogicSigName] as LogicSigContract;
-			mEscrowLogicsigSignature = GetLogicsigSignature(Base64.Decode(mEscrowLogicSig?.Logic?.ByteCode), true);
+			mEscrowLogicsigSignature = GetLogicsigSignature(Base64.Decode(mEscrowLogicSig?.Logic?.ByteCode));
 		}
 
-		private static LogicsigSignature GetLogicsigSignature(byte[] bytes, bool usePatch) {
+		private static LogicsigSignature GetLogicsigSignature(byte[] bytes) {
 
 			if (TryCreateLogicsigSignature(bytes, out var result, out var exception)) {
-				return result;
-			}
-
-			if (usePatch && TryCreateLogicsigSignatureWithPatch(bytes, out result, out exception)) {
 				return result;
 			}
 
@@ -108,30 +103,6 @@ namespace Yieldly.V1 {
 			try {
 
 				result = new LogicsigSignature(logic: bytes);
-				exception = null;
-
-				return true;
-
-			} catch (Exception ex) {
-
-				result = null;
-				exception = ex;
-
-				return false;
-			}
-		}
-
-		private static bool TryCreateLogicsigSignatureWithPatch(
-			byte[] bytes, out LogicsigSignature result, out Exception exception) {
-
-			try {
-
-				result = new LogicsigSignature {
-					logic = bytes
-				};
-
-				Patch.Logic.CheckProgram(bytes, null);
-
 				exception = null;
 
 				return true;

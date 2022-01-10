@@ -1,9 +1,9 @@
-﻿using Org.BouncyCastle.Utilities;
+﻿using Algorand.Common.Asc;
+using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Yieldly.V1.Asc;
 
 namespace Yieldly.V1 {
 	

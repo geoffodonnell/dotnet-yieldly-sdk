@@ -1,10 +1,10 @@
 ﻿using Algorand;
+using Algorand.Common;
 using Algorand.V2.Algod.Model;
 using Algorand.V2.Indexer.Model;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
-using Yieldly.V1.Model;
 using Transaction = Algorand.Transaction;
 
 namespace Yieldly.V1 {

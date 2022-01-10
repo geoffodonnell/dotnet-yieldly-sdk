@@ -1,4 +1,5 @@
 ﻿using Algorand;
+using Algorand.Common;
 using Algorand.V2;
 using Algorand.V2.Algod;
 using Algorand.V2.Algod.Model;
@@ -14,12 +15,10 @@ namespace Yieldly.V1 {
 
 	public class YieldlyClient {
 
-		protected readonly DefaultApi mDefaultApi;
+		protected readonly IDefaultApi mDefaultApi;
 		protected readonly HttpClient mHttpClient;
 
-		public HttpClient HttpClient { get => mHttpClient; }
-
-		public DefaultApi DefaultApi { get => mDefaultApi; }
+		public IDefaultApi DefaultApi { get => mDefaultApi; }
 
 		/// <summary>
 		/// Construct a new instance which connects to the default node
@@ -28,10 +27,23 @@ namespace Yieldly.V1 {
 			this(Constant.AlgodMainnetHost, String.Empty) { }
 
 		/// <summary>
-		/// 
+		/// Construct a new instance with an existing Algod API service
+		/// </summary>
+		/// <param name="defaultApi">Algod API service</param>
+		public YieldlyClient(IDefaultApi defaultApi) {
+
+			mHttpClient = null;
+			mDefaultApi = defaultApi;
+		}
+
+		/// <summary>
+		/// Construct a new instance with a URL and token
 		/// </summary>
 		/// <param name="url">Algorand node URL</param>
 		/// <param name="token">Algorand node API key</param>
+		/// <remarks>
+		/// This constructor creates an instance of <see cref="HttpClient"/>
+		/// </remarks>
 		public YieldlyClient(string url, string token) {
 
 			mHttpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
@@ -72,7 +84,7 @@ namespace Yieldly.V1 {
 		public virtual async Task<PostTransactionsResponse> SubmitAsync(
 			TransactionGroup transactionGroup, bool wait = true) {
 
-			return await transactionGroup.SubmitAsync(mDefaultApi, wait);
+			return await mDefaultApi.SubmitTransactionGroupAsync(transactionGroup, wait);
 		}
 
 		/// <summary>
