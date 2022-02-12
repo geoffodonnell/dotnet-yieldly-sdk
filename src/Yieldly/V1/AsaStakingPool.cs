@@ -7,19 +7,36 @@ using System.Linq;
 using System.Threading.Tasks;
 using Yieldly.V1.Model;
 using Account = Algorand.Account;
-using AccountInformation = Algorand.V2.Algod.Model.Account;
+using AccountModel = Algorand.V2.Algod.Model.Account;
 
 namespace Yieldly.V1 {
 
 	public class AsaStakingPool {
 
-		public ulong ApplicationId { get; set; }
+		/// <summary>
+		/// Pool application ID
+		/// </summary>
+		public virtual ulong ApplicationId { get; set; }
 
-		public SimpleAsset StakeAsset { get; set; }
+		/// <summary>
+		/// Stake asset
+		/// </summary>
+		public virtual SimpleAsset StakeAsset { get; set; }
 
-		public SimpleAsset RewardAsset { get; set; }
+		/// <summary>
+		/// Reward asset
+		/// </summary>
+		public virtual SimpleAsset RewardAsset { get; set; }
 
-		public string Address { get; set; }
+		/// <summary>
+		/// Pool address
+		/// </summary>
+		public virtual string Address { get; set; }
+
+		/// <summary>
+		/// Pool type
+		/// </summary>
+		public virtual AsaStakingPoolType Type { get => AsaStakingPoolType.Teal3; }
 
 		internal YieldlyClient Client { get; set; }
 
@@ -83,7 +100,7 @@ namespace Yieldly.V1 {
 		}
 
 		protected virtual bool AccountIsOptedInToAsset(
-			AccountInformation accountInfo, ulong assetId) {
+			AccountModel accountInfo, ulong assetId) {
 
 			return accountInfo
 				.Assets
@@ -140,7 +157,7 @@ namespace Yieldly.V1 {
 
 			var results = new List<PostTransactionsResponse>();
 
-			AccountInformation accountInfo = (optInToStakeAsset || optInToRewardAsset)
+			AccountModel accountInfo = (optInToStakeAsset || optInToRewardAsset)
 				? await Client.DefaultApi.AccountsAsync(account.Address.EncodeAsString(), Format.Json)
 				: null;
 

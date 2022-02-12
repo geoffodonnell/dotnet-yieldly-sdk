@@ -1,9 +1,14 @@
-﻿using Algorand.Common.Asc;
+﻿using Algorand.Common;
+using Algorand.Common.Asc;
+using Algorand.V2.Algod.Model;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace Yieldly.V1 {
 	
@@ -13,7 +18,76 @@ namespace Yieldly.V1 {
 			return Convert.ToUInt64(Math.Floor(yieldly * 1000000));
 		}
 
-		public static string Base64Decode(string base64String) {
+        public static BigInteger GetBigInteger(
+            ICollection<Algorand.V2.Algod.Model.ApplicationLocalState> state,
+            ulong applicationId,
+            string key) {
+
+            var base64 = ApplicationState.GetBytes(state, applicationId, key);
+            var bytes = Base64.Decode(base64);
+
+            return ToNumber(bytes);
+        }
+
+        public static BigInteger GetBigInteger(
+            TealKeyValueStore state,
+            string key) {
+
+            var base64 = ApplicationState.GetBytes(state, key);
+            var bytes = Base64.Decode(base64);
+
+            return ToNumber(bytes);
+        }
+
+        private static BigInteger ToNumber(byte[] value) {
+
+            if (value.Length == 0) {
+                return 0;
+            }
+
+            var bytes = Pad(value);
+
+#if NETCOREAPP3_1_OR_GREATER
+            return new BigInteger(bytes, true, true);
+#elif NETSTANDARD2_0_OR_GREATER
+            var littleEndianBytes = bytes
+                .Select(BinaryPrimitives.ReverseEndianness)
+                .ToArray();
+
+            return new BigInteger(littleEndianBytes);
+#endif
+        }
+
+        private static byte[] Pad(byte[] bytes) {
+
+            var parts = (bytes.Length + 7) / 8;
+            var result = new byte[parts * 8];
+
+#if NETCOREAPP3_1_OR_GREATER
+            Array.Fill<byte>(result, 0);
+#elif NETSTANDARD2_0_OR_GREATER
+            for (var i = 0; i < result.Length; i++) {
+                result[i] = 0;
+            }
+#endif
+            Array.Copy(bytes, 0, result, result.Length - bytes.Length, bytes.Length);
+
+            return result;
+        }
+
+        public static ulong? GetBlockTime(Response2 response) {
+
+            ulong? result = null;
+
+            var block = response.Block as JObject;
+            if (block.TryGetValue("ts", out var ts)) {
+                result = ts.ToObject<ulong?>().GetValueOrDefault();
+            }
+
+            return result;
+        }
+
+        public static string Base64Decode(string base64String) {
 
 			return Strings.FromUtf8ByteArray(Base64.Decode(base64String));
 		}

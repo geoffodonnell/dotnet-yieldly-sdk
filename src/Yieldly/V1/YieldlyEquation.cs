@@ -73,6 +73,47 @@ namespace Yieldly.V1 {
 			};
 		}
 
+		public static AsaStakingRewardAmount CalculateAsaStakePoolClaimableAmountTeal5(
+			Account accountInfo, Application application, ulong time) {
+
+			/* User values */
+			var userDebt = YieldlyUtils.GetBigInteger(accountInfo.AppsLocalState, application.Id, "User_Debt_1");
+			var userStake = YieldlyUtils.GetBigInteger(accountInfo.AppsLocalState, application.Id, "User_Stake");
+			var userClaimable = YieldlyUtils.GetBigInteger(accountInfo.AppsLocalState, application.Id, "User_Claimable_1");
+
+			/* Application values */
+			var startDate = (ulong)YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Start_Date");
+			var endDate = (ulong)YieldlyUtils.GetBigInteger(application.Params.GlobalState, "End_Date");
+			var rewardsLocked = (ulong)YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Rewards_Locked_1");
+			var rewardsUnlocked = (ulong)YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Rewards_Unlocked_1");
+			var precision = YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Precision");
+			var globalStake = YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Global_Stake");
+
+			/* Maximum value for 'time' is the value of End_Date */
+			if (endDate < time) {
+				time = endDate;
+			}
+
+			var totalUnlocked = (ulong)((double)(time - startDate) / (double)(endDate - startDate) * (double)rewardsLocked);
+			var remainingUnlocked = totalUnlocked - rewardsUnlocked;
+
+			var tokenPerShare = YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Token_Per_Share_1");
+			var remainingUnlockedShare = BigInteger.Divide(BigInteger.Multiply(remainingUnlocked, precision), globalStake) + tokenPerShare;
+			var remainingUnlockedUserShare = BigInteger.Divide(BigInteger.Multiply(remainingUnlockedShare, userStake), precision);
+
+			BigInteger result;
+
+			if (remainingUnlockedUserShare < userDebt) {
+				result = userClaimable + remainingUnlockedUserShare;
+			} else {
+				result = userClaimable + remainingUnlockedUserShare - userDebt;
+			}
+
+			return new AsaStakingRewardAmount {
+				Asa = (ulong)result
+			};
+		}
+
 		private static double? GetUserShareOfClaimableTotalAmount(
 			Account accountInfo, Application application) {
 

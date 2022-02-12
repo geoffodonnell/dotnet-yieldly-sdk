@@ -148,9 +148,19 @@ namespace Yieldly.V1 {
 		/// <returns>Stake pool</returns>
 		public virtual async Task<AsaStakingPool> FetchStakingPoolAsync(ulong appId) {
 
-			var lsigSignature = Contract.GetAsaStakePoolLogicsigSignature(appId);
-			var poolApp = await mDefaultApi.ApplicationsAsync((int)appId);
-			var globalState = poolApp.Params.GlobalState
+			var application = await mDefaultApi.ApplicationsAsync((int)appId);
+
+			if (!String.IsNullOrWhiteSpace(ApplicationState.GetBytes(application.Params.GlobalState, "E"))) {
+				return await CreateTeal3StakingPool(application);
+			} else {
+				return await CreateTeal5StakingPool(application);
+			}
+		}
+
+		protected virtual async Task<AsaStakingPool> CreateTeal3StakingPool(Application application) {
+
+			var lsigSignature = Contract.GetAsaStakePoolLogicsigSignature(application.Id);
+			var globalState = application.Params.GlobalState
 				.ToDictionary(s => YieldlyUtils.Base64Decode(s.Key), s => s.Value);
 
 			Address escrowAddress = null;
@@ -175,20 +185,42 @@ namespace Yieldly.V1 {
 
 			if (globalState.TryGetValue("RA", out value)) {
 				rewardAssetId = value.Uint;
-			} else { 
+			} else {
 				return null;
 			}
 
 			var rewardAsset = await FetchAssetAsync(rewardAssetId.Value);
 
-			return new AsaStakingPool { 
+			return new AsaStakingPool {
 				Client = this,
-				ApplicationId = appId,
+				ApplicationId = application.Id,
 				Address = escrowAddress.EncodeAsString(),
 				StakeAsset = stakeAsset,
 				RewardAsset = rewardAsset,
-				Application = poolApp,
+				Application = application,
 				LogicsigSignature = lsigSignature
+			};
+		}
+
+		protected virtual async Task<AsaStakingPool> CreateTeal5StakingPool(Application application) {
+
+			var address = Algorand.Address.ForApplication(application.Id);
+			var precision = YieldlyUtils.GetBigInteger(application.Params.GlobalState, "Precision");
+			var stakeAssetId = ApplicationState.GetNumber(application.Params.GlobalState, "Staking_Token");
+			var rewardAssetId = ApplicationState.GetNumber(application.Params.GlobalState, "Reward_Token_1");
+
+			var stakeAsset = await FetchAssetAsync(stakeAssetId.Value);
+			var rewardAsset = await FetchAssetAsync(rewardAssetId.Value);
+
+			return new AsaStakingPoolTeal5 {
+				Client = this,
+				ApplicationId = application.Id,
+				Address = address.EncodeAsString(),
+				StakeAsset = stakeAsset,
+				RewardAsset = rewardAsset,
+				Application = application,
+				LogicsigSignature = null,
+				Precision = precision
 			};
 		}
 
