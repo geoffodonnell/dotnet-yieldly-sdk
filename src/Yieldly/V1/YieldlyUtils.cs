@@ -47,9 +47,9 @@ namespace Yieldly.V1 {
 
             var bytes = Pad(value);
 
-#if NETCOREAPP3_1_OR_GREATER
+#if NETCOREAPP3_1
             return new BigInteger(bytes, true, true);
-#elif NETSTANDARD2_0_OR_GREATER
+#elif NETSTANDARD2_0
             var littleEndianBytes = bytes
                 .Select(BinaryPrimitives.ReverseEndianness)
                 .ToArray();
@@ -63,9 +63,9 @@ namespace Yieldly.V1 {
             var parts = (bytes.Length + 7) / 8;
             var result = new byte[parts * 8];
 
-#if NETCOREAPP3_1_OR_GREATER
+#if NETCOREAPP3_1
             Array.Fill<byte>(result, 0);
-#elif NETSTANDARD2_0_OR_GREATER
+#elif NETSTANDARD2_0
             for (var i = 0; i < result.Length; i++) {
                 result[i] = 0;
             }
