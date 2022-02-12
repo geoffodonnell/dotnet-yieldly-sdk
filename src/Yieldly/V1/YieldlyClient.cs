@@ -5,6 +5,7 @@ using Algorand.V2.Algod;
 using Algorand.V2.Algod.Model;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Yieldly.V1 {
 
 		protected readonly IDefaultApi mDefaultApi;
 		protected readonly HttpClient mHttpClient;
+		protected readonly ConcurrentDictionary<ulong, SimpleAsset> mAssetCache;
 
 		public IDefaultApi DefaultApi { get => mDefaultApi; }
 
@@ -34,6 +36,8 @@ namespace Yieldly.V1 {
 
 			mHttpClient = null;
 			mDefaultApi = defaultApi;
+			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
+
 		}
 
 		/// <summary>
@@ -50,6 +54,7 @@ namespace Yieldly.V1 {
 			mDefaultApi = new DefaultApi(mHttpClient) {
 				BaseUrl = url
 			};
+			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
 		}
 
 		/// <summary>
@@ -73,6 +78,22 @@ namespace Yieldly.V1 {
 		public virtual async Task<TransactionParametersResponse> FetchTransactionParamsAsync() {
 
 			return await mDefaultApi.ParamsAsync();
+		}
+
+		/// <summary>
+		/// Fetch an asset given the asset ID.
+		/// </summary>
+		/// <param name="id">The asset ID</param>
+		/// <returns>The asset</returns>
+		public virtual async Task<SimpleAsset> FetchAssetAsync(ulong id) {
+
+			if (mAssetCache.TryGetValue(id, out var value)) {
+				return value;
+			}
+
+			value = await FetchAssetFromApiAsync(id);
+
+			return mAssetCache.GetOrAdd(id, s => value);
 		}
 
 		/// <summary>
@@ -148,7 +169,7 @@ namespace Yieldly.V1 {
 				return null;
 			}
 
-			var stakeAsset = await mDefaultApi.AssetsAsync(stakeAssetId.Value);
+			var stakeAsset = await FetchAssetAsync(stakeAssetId.Value);
 
 			ulong? rewardAssetId = null;
 
@@ -158,14 +179,14 @@ namespace Yieldly.V1 {
 				return null;
 			}
 
-			var rewardAsset = await mDefaultApi.AssetsAsync(rewardAssetId.Value);
+			var rewardAsset = await FetchAssetAsync(rewardAssetId.Value);
 
 			return new AsaStakingPool { 
 				Client = this,
 				ApplicationId = appId,
 				Address = escrowAddress.EncodeAsString(),
-				StakeAsset = stakeAsset.ToSimpleAsset(),
-				RewardAsset = rewardAsset.ToSimpleAsset(),
+				StakeAsset = stakeAsset,
+				RewardAsset = rewardAsset,
 				Application = poolApp,
 				LogicsigSignature = lsigSignature
 			};
@@ -402,9 +423,9 @@ namespace Yieldly.V1 {
 			bool includeYieldlyAsa = true) {
 
 			var txParams = await mDefaultApi.ParamsAsync();
-			var asset = await mDefaultApi.AssetsAsync(Constant.YieldlyAssetId);
+			var asset = await FetchAssetAsync(Constant.YieldlyAssetId);
 
-			var closeTo = new Address(asset.Params.Creator);
+			var closeTo = new Address(asset.Creator);
 
 			var result = YieldlyTransaction
 				.PrepareOptOutTransactions(
@@ -527,6 +548,29 @@ namespace Yieldly.V1 {
 					amount.Algo, amount.Yieldly, sender, txParams);
 
 			return result;
+		}
+
+		protected virtual async Task<SimpleAsset> FetchAssetFromApiAsync(ulong id) {
+
+			if (id == 0) {
+				return new SimpleAsset {
+					Id = 0,
+					Name = "Algo",
+					UnitName = "ALGO",
+					Decimals = 6,
+					Creator = null
+				};
+			}
+
+			var asset = await DefaultApi.AssetsAsync(id);
+
+			return new SimpleAsset {
+				Id = id,
+				Name = asset.Params.Name,
+				UnitName = asset.Params.UnitName,
+				Decimals = asset.Params.Decimals,
+				Creator = asset.Params.Creator
+			};
 		}
 
 	}

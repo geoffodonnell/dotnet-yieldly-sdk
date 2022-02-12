@@ -7,22 +7,27 @@ namespace Yieldly.V1.Model {
 		/// <summary>
 		/// Asset ID of the holding
 		/// </summary>
-		public ulong Id { get; set; }
+		public virtual ulong Id { get; set; }
 
 		/// <summary>
 		/// Name of this asset, as supplied by the creator
 		/// </summary>
-		public string Name { get; set; }
+		public virtual string Name { get; set; }
 
 		/// <summary>
 		/// Name of a unit of this asset, as supplied by the creator.
 		/// </summary>
-		public string UnitName { get; set; }
+		public virtual string UnitName { get; set; }
 
 		/// <summary>
 		/// This value must be between 0 and 19 (inclusive)
 		/// </summary>
-		public int Decimals { get; set; }
+		public virtual int Decimals { get; set; }
+
+		/// <summary>
+		/// Creator address
+		/// </summary>
+		public virtual string Creator { get; set; }
 
 		public virtual double ToDisplayValue(ulong baseValue) {
 			return baseValue / Math.Pow(10, Decimals);
