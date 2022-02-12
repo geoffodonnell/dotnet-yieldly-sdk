@@ -62,7 +62,10 @@ namespace Yieldly.V1 {
 
 			var txParams = await Client.DefaultApi.ParamsAsync();
 
-			throw new NotImplementedException();
+			var result = YieldlyTransaction
+				.PrepareAsaStakingPoolWithdrawTransactionsTeal5(withdrawAmount, this, sender, txParams);
+
+			return result;
 		}
 
 		/// <inheritdoc />

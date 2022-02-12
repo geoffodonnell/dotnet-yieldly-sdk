@@ -174,7 +174,7 @@ namespace Yieldly.V1 {
 
 		#region Lottery Transactions
 
-		public static TransactionGroup PrepareLotteryDepositTransactions(			
+		public static TransactionGroup PrepareLotteryDepositTransactions(
 			ulong algoAmount,
 			Address sender,
 			TransactionParametersResponse txParams) {
@@ -532,7 +532,7 @@ namespace Yieldly.V1 {
 				random = (new Random()).Next(1, 10000);
 			}
 
-			// Call Staking App w/ arg stake
+			// Call Staking App w/ arg 'stake'
 			transactions.Add(TxnFactory.AppCall(
 				sender,
 				pool.ApplicationId,
@@ -549,7 +549,7 @@ namespace Yieldly.V1 {
 				pool.StakeAsset.Id,
 				txParams));
 
-			// Call Staking App w/ arg
+			// Call Staking App w/ arg 'bail'
 			transactions.Add(TxnFactory.AppCall(
 			sender,
 			pool.ApplicationId,
@@ -613,6 +613,46 @@ namespace Yieldly.V1 {
 			result.SignWithLogicSig(escrowSignature);
 
 			return result;
+		}
+
+		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactionsTeal5(
+			ulong withdrawAmount,
+			AsaStakingPool pool,
+			Address sender,
+			TransactionParametersResponse txParams,
+			int random = 0) {
+
+			var transactions = new List<Transaction>();
+
+			if (random < 0 || random > 10000) {
+				random = (new Random()).Next(1, 10000);
+			}
+
+			// Call Staking App w/ arg 'withdraw'
+			transactions.Add(TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 2000,
+				foreignAssets: new[] {
+					pool.StakeAsset.Id
+				},
+				applicationArgs: new[] {
+					ApplicationArgument.String("withdraw"),
+					ApplicationArgument.Number(withdrawAmount)
+				}));
+
+			// Call Staking App w/ arg 'bail'
+			transactions.Add(TxnFactory.AppCall(
+			sender,
+			pool.ApplicationId,
+			txParams,
+			applicationArgs: new[] {
+				ApplicationArgument.String("bail"),
+				ApplicationArgument.Number((ulong)random)
+			}));
+
+			return new TransactionGroup(transactions);
 		}
 
 		public static TransactionGroup PrepareAsaStakingPoolClaimRewardTransactions(
