@@ -518,6 +518,50 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
+		public static TransactionGroup PrepareAsaStakingPoolDepositTransactionsTeal5(
+			ulong stakeAmount,
+			AsaStakingPoolTeal5 pool,
+			Address sender,
+			TransactionParametersResponse txParams,
+			int random = 0) {
+
+			var escrowAddress = new Address(pool.Address);
+			var transactions = new List<Transaction>();
+
+			if (random < 0 || random > 10000) {
+				random = (new Random()).Next(1, 10000);
+			}
+
+			// Call Staking App w/ arg stake
+			transactions.Add(TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				applicationArgs: new[] {
+					ApplicationArgument.String("stake")
+				}));
+
+			// Send amount to Escrow address
+			transactions.Add(TxnFactory.Pay(
+				sender,
+				escrowAddress,
+				stakeAmount,
+				pool.StakeAsset.Id,
+				txParams));
+
+			// Call Staking App w/ arg
+			transactions.Add(TxnFactory.AppCall(
+			sender,
+			pool.ApplicationId,
+			txParams,
+			applicationArgs: new[] {
+				ApplicationArgument.String("bail"),
+				ApplicationArgument.Number((ulong)random)
+			}));
+
+			return new TransactionGroup(transactions);
+		}
+
 		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactions(
 			ulong withdrawAmount,
 			AsaStakingPool pool,

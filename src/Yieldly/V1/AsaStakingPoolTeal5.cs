@@ -1,16 +1,12 @@
 ﻿using Algorand;
 using Algorand.Common;
 using Algorand.V2.Algod.Model;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
-using Account = Algorand.Account;
+using Yieldly.V1.Model;
 
-namespace Yieldly.V1.Model {
+namespace Yieldly.V1 {
 
 	public class AsaStakingPoolTeal5 : AsaStakingPool {
 
@@ -53,7 +49,10 @@ namespace Yieldly.V1.Model {
 
 			var txParams = await Client.DefaultApi.ParamsAsync();
 
-			throw new NotImplementedException();
+			var result = YieldlyTransaction
+				.PrepareAsaStakingPoolDepositTransactionsTeal5(stakeAmount, this, sender, txParams);
+
+			return result;
 		}
 
 		/// <inheritdoc />
