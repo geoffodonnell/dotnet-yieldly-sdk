@@ -1,15 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
 		<Description>This library provides access to the Yieldly No Loss Lottery and Staking contracts on the Algorand blockchain.</Description>
 		<Company></Company>
 		<PackageProjectUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</PackageProjectUrl>
 		<Authors>Geoff O'Donnell</Authors>
 		<RepositoryUrl>https://github.com/geoffodonnell/dotnet-yieldly-sdk</RepositoryUrl>
-		<UserSecretsId>d27841c1-f33c-4afb-b978-4bea9597ab40</UserSecretsId>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+	<PropertyGroup>
+		<NoWarn>1591;1701;1702</NoWarn>
+	</PropertyGroup>
+	
   <ItemGroup>
     <None Remove="V1\asc.json" />
   </ItemGroup>
@@ -20,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Algorand" Version="0.2.1" />
-    <PackageReference Include="Algorand.Common" Version="0.0.0.1" />
+    <PackageReference Include="Algorand.Common" Version="0.0.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 

@@ -102,7 +102,9 @@ namespace Yieldly.V1 {
 
 			try {
 
-				result = new LogicsigSignature(logic: bytes);
+				result = new LogicsigSignature {
+					logic = bytes
+				};
 				exception = null;
 
 				return true;

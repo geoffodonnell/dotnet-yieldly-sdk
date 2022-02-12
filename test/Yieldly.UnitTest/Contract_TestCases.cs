@@ -9,7 +9,7 @@ namespace Yieldly.UnitTest {
 	[TestClass]
 	public class Contract_TestCases {
 
-		public static StringComparison mCmp = StringComparison.OrdinalIgnoreCase;
+		public static StringComparison mCmp = StringComparison.InvariantCulture;
 
 		[TestMethod]
 		public void EscrowLogicsigSignature_NotNull() {
