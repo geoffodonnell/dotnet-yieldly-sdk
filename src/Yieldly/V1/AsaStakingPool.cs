@@ -130,6 +130,7 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to opt-in</param>
 		/// <param name="optInToStakeAsset">Whether or not to opt-in to the stake asset</param>
 		/// <param name="optInToRewardAsset">Whether or not to opt-in to the reward asset</param>
+		/// <param name="wait">Whether or not to wait for the transaction(s) to be confirmed</param>
 		/// <returns>Transaction responses</returns>
 		public virtual async Task<PostTransactionsResponse[]> OptInAsync(
 			Account account,
@@ -183,6 +184,7 @@ namespace Yieldly.V1 {
 		/// <param name="account">Account to opt-out</param>
 		/// <param name="optOutOfRewardAsset">Whether or not to opt-out of the reward asset</param>
 		/// <param name="checkRewardAssetBalance">Whether or not to check the balance of reward asset before opting-out</param>
+		/// <param name="wait">Whether or not to wait for the transaction(s) to be confirmed</param>
 		/// <returns>Transaction response</returns>
 		public virtual async Task<PostTransactionsResponse> OptOutAsync(
 			Account account,
@@ -217,6 +219,7 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="account">Account to make deposit</param>
 		/// <param name="stakeAmount">Amount to deposit</param>
+		/// <param name="wait">Whether or not to wait for the transaction(s) to be confirmed</param>
 		/// <returns>Transaction response</returns>
 		public virtual async Task<PostTransactionsResponse> DepositAsync(
 			Account account,
@@ -236,6 +239,7 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="account">Account to make withdrawl</param>
 		/// <param name="withdrawAmount">Amount to withdraw</param>
+		/// <param name="wait">Whether or not to wait for the transaction(s) to be confirmed</param>
 		/// <returns></returns>
 		public virtual async Task<PostTransactionsResponse> WithdrawAsync(
 			Account account,
@@ -255,6 +259,7 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="account">Account to make claim</param>
 		/// <param name="rewardAmount">Amount to claim</param>
+		/// <param name="wait">Whether or not to wait for the transaction(s) to be confirmed</param>
 		/// <returns>Transaction response</returns>
 		public virtual async Task<PostTransactionsResponse> ClaimRewardAsync(
 			Account account,
