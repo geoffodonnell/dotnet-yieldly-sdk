@@ -10,7 +10,7 @@ This library provides access to the [Yieldly](https://app.yieldly.finance/) No L
 Arbitrary stake pools are now supported. Use the `FetchStakingPoolAsync(...)` method on `YieldlyClient` to retrieve pool, this object can be used by following the same pattern as the client itself. That is, either pass the account instance to a method, which will submit signed transactions to complete an operation, or use the `Prepare...` methods to create a transaction group and handle signing the applicable transactions (see the [example](/example) directory for sample implementations).
 
 ## Roadmap
-- [ ] Add support for TEAL5 Staking pools
+- [x] Add support for TEAL5 Staking pools
 - [ ] Add example projects for staking pool operations
 - [ ] Create PowerShell module and cmdlets for common operations
 - [ ] Investigate Liquidity Staking pool support
@@ -32,7 +32,7 @@ dotnet add package Yieldly
 # Usage
 This section contains examples for interacting with the lottery and staking contracts. It's possible to use this SDK without passing the Account object to SDK methods, see the `Verbose` example projects in the [example](/example) directory.
 
-Note, deposits and withdraws are to/from an escrow account, not the contracts themselves. 
+TEAL5 staking pools are now supported. The `Type` property on `AsaStakingPool` indicate the pool type.
 
 ## Lottery Deposit
 Deposit ALGO in the no loss lottery.
