@@ -22,7 +22,7 @@ namespace Yieldly.V1 {
 		/// <param name="includeProxyContract">Whether or not to opt-in to the proxy contract</param>
 		/// <param name="includeStakingContract">Whether or not to opt-in to the staking contract</param>
 		/// <param name="includeLotteryContract">Whether or not to opt-in to the lottery contract</param>
-		/// <returns></returns>
+		/// <returns>Transaction group to execute action</returns>
 		public static TransactionGroup PrepareOptInTransactions(
 			Address sender,
 			TransactionParametersResponse txParams,
@@ -62,7 +62,7 @@ namespace Yieldly.V1 {
 		/// <param name="appId">Pool application ID</param>
 		/// <param name="sender">Account address</param>
 		/// <param name="txParams">Network parameters</param>
-		/// <returns></returns>
+		/// <returns>Transaction group to execute action</returns>
 		public static TransactionGroup PrepareAsaStakingPoolOptInTransactions(
 			ulong appId,
 			Address sender,
@@ -88,7 +88,7 @@ namespace Yieldly.V1 {
 		/// <param name="includeProxyContract">Whether or not to opt-out of the proxy contract</param>
 		/// <param name="includeStakingContract">Whether or not to opt-out of the staking contract</param>
 		/// <param name="includeLotteryContract">Whether or not to opt-out of the lottery contract</param>
-		/// <returns></returns>
+		/// <returns>Transaction group to execute action</returns>
 		public static TransactionGroup PrepareOptOutTransactions(
 			Address closeTo,
 			Address sender,
@@ -129,7 +129,7 @@ namespace Yieldly.V1 {
 		/// <param name="appId">Pool application ID</param>
 		/// <param name="sender">Account address</param>
 		/// <param name="txParams">Network parameters</param>
-		/// <returns></returns>
+		/// <returns>Transaction group to execute action</returns>
 		public static TransactionGroup PrepareAsaStakingPoolOptOutTransactions(
 			ulong appId,
 			Address sender,
@@ -143,9 +143,10 @@ namespace Yieldly.V1 {
 		/// </summary>
 		/// <param name="appId">Pool application ID</param>
 		/// <param name="assetId">Asset ID (optional)</param>
+		/// <param name="closeTo">Account to send remaining amount to (if any)</param>
 		/// <param name="sender">Account address</param>
 		/// <param name="txParams">Network parameters</param>
-		/// <returns></returns>
+		/// <returns>Transaction group to execute action</returns>
 		public static TransactionGroup PrepareAsaStakingPoolOptOutTransactions(
 			ulong appId,
 			ulong? assetId,
@@ -617,7 +618,7 @@ namespace Yieldly.V1 {
 
 		public static TransactionGroup PrepareAsaStakingPoolWithdrawTransactionsTeal5(
 			ulong withdrawAmount,
-			AsaStakingPool pool,
+			AsaStakingPoolTeal5 pool,
 			Address sender,
 			TransactionParametersResponse txParams,
 			int random = 0) {
@@ -707,6 +708,44 @@ namespace Yieldly.V1 {
 			result.SignWithLogicSig(escrowSignature);
 
 			return result;
+		}
+
+		public static TransactionGroup PrepareAsaStakingPoolClaimRewardTransactionsTeal5(
+			AsaStakingPoolTeal5 pool,
+			Address sender,
+			TransactionParametersResponse txParams,
+			int random = 0) {
+
+			var transactions = new List<Transaction>();
+
+			if (random < 0 || random > 10000) {
+				random = (new Random()).Next(1, 10000);
+			}
+
+			// Call Staking App w/ arg 'claim'
+			transactions.Add(TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 2000,
+				foreignAssets: new[] {
+					pool.RewardAsset.Id
+				},
+				applicationArgs: new[] {
+					ApplicationArgument.String("claim"),
+				}));
+
+			// Call Staking App w/ arg 'bail'
+			transactions.Add(TxnFactory.AppCall(
+			sender,
+			pool.ApplicationId,
+			txParams,
+			applicationArgs: new[] {
+				ApplicationArgument.String("bail"),
+				ApplicationArgument.Number((ulong)random)
+			}));
+
+			return new TransactionGroup(transactions);
 		}
 
 		#endregion

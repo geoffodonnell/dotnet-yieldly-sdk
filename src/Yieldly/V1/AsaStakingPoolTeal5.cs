@@ -68,14 +68,27 @@ namespace Yieldly.V1 {
 			return result;
 		}
 
-		/// <inheritdoc />
+		/// <summary>
+		/// Create a transaction group to claim rewards from the stake pool
+		/// </summary>
+		/// <param name="sender">Address of account</param>
+		/// <param name="rewardAmount">Amount to claim</param>
+		/// <returns>Transaction group</returns>
+		/// <remarks>
+		/// Note that 'rewardAmount' is ignored for TEAL5 staking pools, the entire amount
+		/// is claimed.
+		/// </remarks>
 		public override async Task<TransactionGroup> PrepareClaimRewardTransactionsAsync(
 			Address sender,
-			ulong rewardAmount) {
+			ulong rewardAmount = 0) {
 
 			var txParams = await Client.DefaultApi.ParamsAsync();
 
-			throw new NotImplementedException();
+			var result = YieldlyTransaction
+				.PrepareAsaStakingPoolClaimRewardTransactionsTeal5(
+					this, sender, txParams);
+
+			return result;
 		}
 
 	}
