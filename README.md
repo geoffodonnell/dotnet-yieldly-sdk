@@ -29,6 +29,14 @@ PM> Install-Package -Id Yieldly
 dotnet add package Yieldly
 ```
 
+# Getting Started
+Other than initializing a client instance, no specific setup is required. However, if your application generates a high volume of requests it is suggested that you setup your own Algod node. See the links below for more information:
+* [Algorand node on Linux/Mac](https://developer.algorand.org/docs/run-a-node/setup/install/)
+* [Algorand node on Windows](https://github.com/randlabs/algorand-windows-node)
+
+## Notes
+The default client connects to an Algod node maintained by [AlgoNode.io](https://algonode.io/) (Thanks AlgoNode!). It's important that your application handle rate limiting (HTTP 429) responses by decreasing the frequency of requests. See [this guide](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/implement-http-call-retries-exponential-backoff-polly) for a discussion on the topic.
+
 # Usage
 This section contains examples for interacting with the lottery and staking contracts. It's possible to use this SDK without passing the Account object to SDK methods, see the `Verbose` example projects in the [example](/example) directory.
 

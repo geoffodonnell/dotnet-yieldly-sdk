@@ -4,7 +4,7 @@ namespace Yieldly.V1 {
 
 	public class Constant {
 
-		public const string AlgodMainnetHost = "https://api.algoexplorer.io";
+		public const string AlgodMainnetHost = "https://mainnet-api.algonode.cloud";
 
 		// https://yieldly.finance/security/
 		// https://algoexplorer.io/asset/226701642
