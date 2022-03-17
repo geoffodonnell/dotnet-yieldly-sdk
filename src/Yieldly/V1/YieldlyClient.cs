@@ -37,7 +37,6 @@ namespace Yieldly.V1 {
 			mHttpClient = null;
 			mDefaultApi = defaultApi;
 			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
-
 		}
 
 		/// <summary>
@@ -69,6 +68,7 @@ namespace Yieldly.V1 {
 			mDefaultApi = new DefaultApi(mHttpClient) {
 				BaseUrl = url
 			};
+			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
 		}
 
 		/// <summary>
