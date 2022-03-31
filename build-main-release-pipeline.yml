@@ -8,7 +8,7 @@ variables:
   buildConfiguration: 'Release'
   nugetPackageId: 'Yieldly'
   majorVersion: '0'
-  minorVersion: '3'
+  minorVersion: '4'
   patchVersion: '0'
 
 pool:

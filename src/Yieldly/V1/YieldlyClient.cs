@@ -50,9 +50,7 @@ namespace Yieldly.V1 {
 		public YieldlyClient(string url, string token) {
 
 			mHttpClient = HttpClientConfigurator.ConfigureHttpClient(url, token);
-			mDefaultApi = new DefaultApi(mHttpClient) {
-				BaseUrl = url
-			};
+			mDefaultApi = new DefaultApi(mHttpClient);
 			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
 		}
 
@@ -65,9 +63,7 @@ namespace Yieldly.V1 {
 			HttpClient httpClient, string url) {
 
 			mHttpClient = httpClient;
-			mDefaultApi = new DefaultApi(mHttpClient) {
-				BaseUrl = url
-			};
+			mDefaultApi = new DefaultApi(mHttpClient);
 			mAssetCache = new ConcurrentDictionary<ulong, SimpleAsset>();
 		}
 
@@ -148,7 +144,7 @@ namespace Yieldly.V1 {
 		/// <returns>Stake pool</returns>
 		public virtual async Task<AsaStakingPool> FetchStakingPoolAsync(ulong appId) {
 
-			var application = await mDefaultApi.ApplicationsAsync((int)appId);
+			var application = await mDefaultApi.ApplicationsAsync(appId);
 
 			if (!String.IsNullOrWhiteSpace(ApplicationState.GetBytes(application.Params.GlobalState, "E"))) {
 				return await CreateTeal3StakingPool(application);
@@ -600,7 +596,7 @@ namespace Yieldly.V1 {
 				Id = id,
 				Name = asset.Params.Name,
 				UnitName = asset.Params.UnitName,
-				Decimals = asset.Params.Decimals,
+				Decimals = (int)asset.Params.Decimals,
 				Creator = asset.Params.Creator
 			};
 		}

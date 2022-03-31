@@ -49,7 +49,7 @@ namespace Yieldly.V1 {
 		/// </summary>
 		public async Task RefreshAsync() {
 
-			Application = await Client.DefaultApi.ApplicationsAsync((int)ApplicationId);
+			Application = await Client.DefaultApi.ApplicationsAsync(ApplicationId);
 		}
 
 		/// <summary>
