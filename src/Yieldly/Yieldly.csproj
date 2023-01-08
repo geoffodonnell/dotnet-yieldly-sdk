@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-		<PackageReference Include="Algorand.Common" Version="1.1.0.1" />
+		<PackageReference Include="Algorand.Common" Version="1.1.0.2" />
 		<PackageReference Include="Algorand2" Version="1.0.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
