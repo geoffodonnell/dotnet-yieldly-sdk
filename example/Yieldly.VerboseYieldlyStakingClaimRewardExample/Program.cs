@@ -1,5 +1,5 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -43,18 +43,18 @@ namespace Yieldly.VerboseYieldlyStakingClaimRewardExample {
 				for (var i = 0; i < stakingClaimTxGroup.Transactions.Length; i++) {
 					var tx = stakingClaimTxGroup.Transactions[i];
 
-					if (tx.sender.Equals(account.Address)) {
+					if (tx.Sender.Equals(account.Address)) {
 
 						// Inspect transaction
 
 						// Sign transaction
-						stakingClaimTxGroup.SignedTransactions[i] = account.SignTransaction(tx);
+						stakingClaimTxGroup.SignedTransactions[i] = tx.Sign(account);
 					}
 				}
 
 				var stakingClaimResult = await client.SubmitAsync(stakingClaimTxGroup);
 
-				Console.WriteLine($"Yieldly staking deposit complete, transaction ID: {stakingClaimResult.TxId}");
+				Console.WriteLine($"Yieldly staking deposit complete, transaction ID: {stakingClaimResult.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

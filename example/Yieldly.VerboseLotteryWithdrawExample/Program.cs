@@ -1,5 +1,5 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -42,18 +42,18 @@ namespace Yieldly.VerboseLotteryWithdrawExample {
 				for (var i = 0; i < lotteryWithdrawTxGroup.Transactions.Length; i++) {
 					var tx = lotteryWithdrawTxGroup.Transactions[i];
 
-					if (tx.sender.Equals(account.Address)) {
+					if (tx.Sender.Equals(account.Address)) {
 
 						// Inspect transaction
 
 						// Sign transaction
-						lotteryWithdrawTxGroup.SignedTransactions[i] = account.SignTransaction(tx);
+						lotteryWithdrawTxGroup.SignedTransactions[i] = tx.Sign(account);
 					}
 				}
 
 				var lotteryWithdrawResult = await client.SubmitAsync(lotteryWithdrawTxGroup);
 
-				Console.WriteLine($"Lottery widthdrawal complete, transaction ID: {lotteryWithdrawResult.TxId}");
+				Console.WriteLine($"Lottery widthdrawal complete, transaction ID: {lotteryWithdrawResult.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

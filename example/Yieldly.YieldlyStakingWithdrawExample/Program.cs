@@ -1,5 +1,5 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -33,7 +33,7 @@ namespace Yieldly.YieldlyStakingWithdrawExample {
 			try {
 				var result = await client.YieldlyStakingWithdrawAsync(account, amounts.YieldlyStaked);
 
-				Console.WriteLine($"Yieldly staking withdraw complete, transaction ID: {result.TxId}");
+				Console.WriteLine($"Yieldly staking withdraw complete, transaction ID: {result.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

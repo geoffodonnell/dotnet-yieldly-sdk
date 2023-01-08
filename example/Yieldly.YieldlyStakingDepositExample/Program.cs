@@ -1,5 +1,5 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -34,7 +34,7 @@ namespace Yieldly.YieldlyStakingDepositExample {
 			try {
 				var result = await client.YieldlyStakingDepositAsync(account, amountToDeposit);
 
-				Console.WriteLine($"Yieldly staking deposit complete, transaction ID: {result.TxId}");
+				Console.WriteLine($"Yieldly staking deposit complete, transaction ID: {result.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

@@ -1,6 +1,6 @@
 ﻿using Algorand.Common;
 using Algorand.Common.Asc;
-using Algorand.V2.Algod.Model;
+using Algorand.Algod.Model;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
@@ -19,7 +19,7 @@ namespace Yieldly.V1 {
 		}
 
         public static BigInteger GetBigInteger(
-            ICollection<Algorand.V2.Algod.Model.ApplicationLocalState> state,
+            ICollection<ApplicationLocalState> state,
             ulong applicationId,
             string key) {
 
@@ -30,7 +30,7 @@ namespace Yieldly.V1 {
         }
 
         public static BigInteger GetBigInteger(
-            TealKeyValueStore state,
+            ICollection<TealKeyValue> state,
             string key) {
 
             var base64 = ApplicationState.GetBytes(state, key);
@@ -47,7 +47,7 @@ namespace Yieldly.V1 {
 
             var bytes = Pad(value);
 
-#if NETCOREAPP3_1
+#if NET6_0
             return new BigInteger(bytes, true, true);
 #elif NETSTANDARD2_0
             var littleEndianBytes = bytes
@@ -63,7 +63,7 @@ namespace Yieldly.V1 {
             var parts = (bytes.Length + 7) / 8;
             var result = new byte[parts * 8];
 
-#if NETCOREAPP3_1
+#if NET6_0
             Array.Fill<byte>(result, 0);
 #elif NETSTANDARD2_0
             for (var i = 0; i < result.Length; i++) {
@@ -75,16 +75,9 @@ namespace Yieldly.V1 {
             return result;
         }
 
-        public static ulong? GetBlockTime(Response2 response) {
+        public static ulong? GetBlockTime(CertifiedBlock response) {
 
-            ulong? result = null;
-
-            var block = response.Block as JObject;
-            if (block.TryGetValue("ts", out var ts)) {
-                result = ts.ToObject<ulong?>().GetValueOrDefault();
-            }
-
-            return result;
+            return response.Block.Timestamp;
         }
 
         public static string Base64Decode(string base64String) {

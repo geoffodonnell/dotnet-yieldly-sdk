@@ -1,7 +1,6 @@
 ﻿using Algorand;
 using Algorand.Common;
-using Algorand.V2.Algod.Model;
-using System;
+using Algorand.Algod.Model;
 using System.Numerics;
 using System.Threading.Tasks;
 using Yieldly.V1.Model;
@@ -23,14 +22,14 @@ namespace Yieldly.V1 {
 			Address address, bool refreshPoolInfo = false) {
 
 			var info = await Client.DefaultApi
-				.AccountsAsync(address.EncodeAsString(), Format.Json);
+				.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
 
 			if (refreshPoolInfo) {
 				await RefreshAsync();
 			}
 
-			var status = await Client.DefaultApi.StatusAsync();
-			var blocks = await Client.DefaultApi.BlocksAsync(status.LastRound, Format.Json);
+			var status = await Client.DefaultApi.GetStatusAsync();
+			var blocks = await Client.DefaultApi.GetBlockAsync(status.LastRound, Format.Json);
 
 			var time = YieldlyUtils.GetBlockTime(blocks);
 			var userStake = YieldlyUtils.GetBigInteger(info.AppsLocalState, ApplicationId, "User_Stake");
@@ -47,7 +46,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong stakeAmount) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolDepositTransactionsTeal5(stakeAmount, this, sender, txParams);
@@ -60,7 +59,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong withdrawAmount) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolWithdrawTransactionsTeal5(withdrawAmount, this, sender, txParams);
@@ -82,7 +81,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong rewardAmount = 0) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolClaimRewardTransactionsTeal5(

@@ -1,4 +1,4 @@
-﻿using Algorand.V2.Algod.Model;
+﻿using Algorand.Algod.Model;
 using System.Linq;
 using System.Numerics;
 using Yieldly.V1.Model;

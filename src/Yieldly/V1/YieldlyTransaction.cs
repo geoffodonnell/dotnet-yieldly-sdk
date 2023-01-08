@@ -1,15 +1,16 @@
 ﻿using Algorand;
 using Algorand.Common;
-using Algorand.V2.Algod.Model;
-using Algorand.V2.Indexer.Model;
+using Algorand.Algod.Model;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
-using Transaction = Algorand.Transaction;
+using Algorand.Algod.Model.Transactions;
 
 namespace Yieldly.V1 {
 
 	public static class YieldlyTransaction {
+
+		private const ulong MinFee = 1000;
 
 		#region Opt In/Out
 
@@ -34,22 +35,22 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			if (includeYieldlyAsa) {
-				transactions.Add(Algorand.Utils.GetAssetOptingInTransaction(
+				transactions.Add(TxnFactory.AssetOptIn(
 					sender, (long)Constant.YieldlyAssetId, txParams));
 			}
 
 			if (includeProxyContract) {
-				transactions.Add(Algorand.Utils.GetApplicationOptinTransaction(
+				transactions.Add(TxnFactory.AppOptIn(
 					sender, (long)Constant.ProxyAppId, txParams));
 			}
 
 			if (includeStakingContract) {
-				transactions.Add(Algorand.Utils.GetApplicationOptinTransaction(
+				transactions.Add(TxnFactory.AppOptIn(
 					sender, (long)Constant.StakingAppId, txParams));
 			}
 
 			if (includeLotteryContract) {
-				transactions.Add(Algorand.Utils.GetApplicationOptinTransaction(
+				transactions.Add(TxnFactory.AppOptIn(
 					sender, (long)Constant.LotteryAppId, txParams));
 			}
 
@@ -72,7 +73,7 @@ namespace Yieldly.V1 {
 			// fails, so the opt-in process is a two step process.
 
 			var transactions = new List<Transaction>() {
-				Algorand.Utils.GetApplicationOptinTransaction(sender, appId, txParams)
+				TxnFactory.AppOptIn(sender, appId, txParams)
 			};
 
 			return new TransactionGroup(transactions);
@@ -101,23 +102,23 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			if (includeYieldlyAsa) {
-				transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
-					sender, sender, (long)Constant.YieldlyAssetId, 0, txParams, closeTo: closeTo));
+				transactions.Add(GetAssetOptOutTransaction(
+					sender, Constant.YieldlyAssetId, closeTo, txParams));
 			}
 
 			if (includeProxyContract) {
-				transactions.Add(Algorand.Utils.GetApplicationCloseTransaction(
-					sender, (long)Constant.ProxyAppId, txParams));
+				transactions.Add(TxnFactory.AppCall(
+					sender, (long)Constant.ProxyAppId, txParams, onCompletion: OnCompletion.Closeout));
 			}
 
 			if (includeStakingContract) {
-				transactions.Add(Algorand.Utils.GetApplicationCloseTransaction(
-					sender, (long)Constant.StakingAppId, txParams));
+				transactions.Add(TxnFactory.AppCall(
+					sender, (long)Constant.StakingAppId, txParams, onCompletion: OnCompletion.Closeout));
 			}
 
 			if (includeLotteryContract) {
-				transactions.Add(Algorand.Utils.GetApplicationCloseTransaction(
-					sender, (long)Constant.LotteryAppId, txParams));
+				transactions.Add(TxnFactory.AppCall(
+					sender, (long)Constant.LotteryAppId, txParams, onCompletion: OnCompletion.Closeout));
 			}
 
 			return new TransactionGroup(transactions);
@@ -156,8 +157,8 @@ namespace Yieldly.V1 {
 
 			var transactions = new List<Transaction>();
 
-			transactions.Add(Algorand.Utils.GetApplicationClearTransaction(
-				sender, appId, txParams));
+			transactions.Add(TxnFactory.AppCall(
+				sender, appId, txParams, onCompletion: OnCompletion.Closeout));
 
 			if (assetId.HasValue) {
 				if (closeTo == null) {
@@ -165,8 +166,8 @@ namespace Yieldly.V1 {
 						$"'{nameof(closeTo)}' cannot be null when '{nameof(assetId)}' is defined.");
 				}
 
-				transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
-					sender, sender, assetId, 0, txParams, closeTo: closeTo));
+				transactions.Add(GetAssetOptOutTransaction(
+					sender, assetId.Value, closeTo, txParams));
 			}
 
 			return new TransactionGroup(transactions);
@@ -184,28 +185,30 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call No Loss Lottery App w/ arg D
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("D"));
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.LotteryAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("D")
+				});
 
 			transactions.Add(callTx2);
 
 			// Deposit
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, algoAmount, null, txParams));
+			transactions.Add(TxnFactory.Pay(
+					sender, escrowAddress, algoAmount, txParams));
 
 			return new TransactionGroup(transactions);
 		}
@@ -220,33 +223,37 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call No Loss Lottery App w/ arg W
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.LotteryAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("W")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Withdrawl
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					escrowAddress, sender, algoAmount, null, txParams));
+			transactions.Add(TxnFactory.Pay(
+					escrowAddress, sender, algoAmount, txParams));
 
 			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 1000, null, txParams));
+			transactions.Add(TxnFactory.Pay(
+					sender, escrowAddress, 1000, txParams));
 
 			var result = new TransactionGroup(transactions);
 
@@ -266,37 +273,41 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call No Loss Lottery App w/ arg CA
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.LotteryAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.LotteryAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("CA")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Claim Yieldly from Yieldly Staking
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+			transactions.Add(TxnFactory.Pay(
 				escrowAddress,
 				sender,
-				(long)Constant.YieldlyAssetId,
 				yieldlyAmount,
+				(long)Constant.YieldlyAssetId,
 				txParams));
 
 			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 1000, null, txParams));
+			transactions.Add(TxnFactory.Pay(
+					sender, escrowAddress, 1000, txParams));
 
 			var result = new TransactionGroup(transactions);
 
@@ -320,31 +331,33 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg S
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("S"));
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.StakingAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("S")
+				});
 
 			transactions.Add(callTx2);
 
 			// Send Yieldly to Escrow address
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+			transactions.Add(TxnFactory.Pay(
 				sender,
 				escrowAddress,
-				(long)Constant.YieldlyAssetId,
 				yieldlyAmount,
+				(long)Constant.YieldlyAssetId,
 				txParams));
 
 			var result = new TransactionGroup(transactions);
@@ -364,37 +377,41 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg W
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.StakingAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("W")
+				},
+				accounts: new Address[] { 
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Withdraw Yieldly from Escrow address
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+			transactions.Add(TxnFactory.Pay(
 				escrowAddress,
 				sender,
-				(long)Constant.YieldlyAssetId,
 				yieldlyAmount,
+				(long)Constant.YieldlyAssetId,
 				txParams));
 
 			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
-					sender, escrowAddress, 1000, null, txParams));
+			transactions.Add(TxnFactory.Pay(
+					sender, escrowAddress, 1000, txParams));
 
 			var result = new TransactionGroup(transactions);
 
@@ -415,51 +432,58 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Proxy App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.ProxyAppId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				Constant.ProxyAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg CA
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				Constant.StakingAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("CA")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Call Staking App w/ arg CAL
-			var callTx3 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, Constant.StakingAppId, txParams);
-
-			callTx3.onCompletion = OnCompletion.Noop;
-			callTx3.applicationArgs = new List<byte[]>();
-			callTx3.applicationArgs.Add(Strings.ToUtf8ByteArray("CAL"));
-			callTx3.accounts.Add(escrowAddress);
+			var callTx3 = TxnFactory.AppCall(
+				sender,
+				Constant.StakingAppId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("CAL")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx3);
 
 			// Claim Yieldly from Yieldly Staking
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+			transactions.Add(TxnFactory.Pay(
 				escrowAddress,
 				sender,
-				(long)Constant.YieldlyAssetId,
 				yieldlyAmount,
+				(long)Constant.YieldlyAssetId,
 				txParams));
 
 			// Claim Algo from Yieldly Staking
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+			transactions.Add(TxnFactory.Pay(
 				escrowAddress, sender, algoAmount, null, txParams));
 
 			// Payment
-			transactions.Add(Algorand.Utils.GetPaymentTransaction(
+			transactions.Add(TxnFactory.Pay(
 					sender, escrowAddress, 2000, null, txParams));
 
 			var result = new TransactionGroup(transactions);
@@ -485,31 +509,33 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Staking App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg S
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("S"));
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("S")
+				});
 
 			transactions.Add(callTx2);
 
 			// Send amount to Escrow address
-			transactions.Add(Algorand.Utils.GetTransferAssetTransaction(
+			transactions.Add(TxnFactory.Pay(
 				sender,
 				escrowAddress,
-				pool.StakeAsset.Id,
 				stakeAmount,
+				pool.StakeAsset.Id,
 				txParams));
 
 			var result = new TransactionGroup(transactions);
@@ -574,38 +600,42 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Staking App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx1.fee = 1000;
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 1000,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg W
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx2.fee = 2000;
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("W"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 2000,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("W")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Withdraw amount from Escrow address
-			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
+			var xferTx = TxnFactory.Pay(
 				escrowAddress,
 				sender,
-				pool.StakeAsset.Id,
 				withdrawAmount,
+				pool.StakeAsset.Id,
 				txParams);
 
 			// Passing flatFee: 0 to the utility method is ignored
-			xferTx.fee = 0;
+			xferTx.Fee = 0;
 
 			transactions.Add(xferTx);
 
@@ -668,38 +698,42 @@ namespace Yieldly.V1 {
 			var transactions = new List<Transaction>();
 
 			// Call Staking App w/ arg check
-			var callTx1 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx1.fee = 1000;
-			callTx1.onCompletion = OnCompletion.Noop;
-			callTx1.applicationArgs = new List<byte[]>();
-			callTx1.applicationArgs.Add(Strings.ToUtf8ByteArray("check"));
+			var callTx1 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 1000,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("check")
+				});
 
 			transactions.Add(callTx1);
 
 			// Call Staking App w/ arg CA
-			var callTx2 = Algorand.Utils.GetApplicationCallTransaction(
-				sender, pool.ApplicationId, txParams);
-
-			callTx2.fee = 2000;
-			callTx2.onCompletion = OnCompletion.Noop;
-			callTx2.applicationArgs = new List<byte[]>();
-			callTx2.applicationArgs.Add(Strings.ToUtf8ByteArray("CA"));
-			callTx2.accounts.Add(escrowAddress);
+			var callTx2 = TxnFactory.AppCall(
+				sender,
+				pool.ApplicationId,
+				txParams,
+				fee: 2000,
+				applicationArgs: new byte[][] {
+					Strings.ToUtf8ByteArray("CA")
+				},
+				accounts: new Address[] {
+					escrowAddress
+				});
 
 			transactions.Add(callTx2);
 
 			// Claim amount staking reward from escrow address
-			var xferTx = Algorand.Utils.GetTransferAssetTransaction(
+			var xferTx = TxnFactory.Pay(
 				escrowAddress,
 				sender,
-				pool.RewardAsset.Id,
 				rewardAmount,
+				pool.RewardAsset.Id,
 				txParams);
 
 			// Passing flatFee: 0 to the utility method is ignored
-			xferTx.fee = 0;
+			xferTx.Fee = 0;
 
 			transactions.Add(xferTx);
 
@@ -758,7 +792,7 @@ namespace Yieldly.V1 {
 			TransactionParametersResponse txParams) {
 
 			var transactions = new List<Transaction>() {
-				Algorand.Utils.GetAssetOptingInTransaction(sender, assetId, txParams)
+				TxnFactory.AssetOptIn(sender, assetId, txParams)
 			};	
 
 			return new TransactionGroup(transactions);
@@ -776,14 +810,36 @@ namespace Yieldly.V1 {
 			}
 
 			var transactions = new List<Transaction>(){
-				Algorand.Utils.GetTransferAssetTransaction(
-					sender, sender, assetId, 0, txParams, closeTo: closeTo)
+				GetAssetOptOutTransaction(
+					sender, assetId, closeTo, txParams)
 			};			
 
 			return new TransactionGroup(transactions);
 		}
 
 		#endregion
+
+		private static Transaction GetAssetOptOutTransaction(
+			Address from,
+			ulong asset,
+			Address closeTo,
+			TransactionParametersResponse txParams) {
+
+			return new AssetTransferTransaction() {
+				XferAsset = asset,
+				AssetAmount = 0,
+				AssetReceiver = from,
+				Sender = from,
+				AssetCloseTo = closeTo,
+				Fee = txParams.Fee >= MinFee ? txParams.Fee : MinFee,
+				// Not populated in older SDK versions, leave it
+				// unpopulated here to satisfy existing unit tests
+				//GenesisID = txParams.GenesisId,
+				GenesisHash = new Digest(txParams.GenesisHash),
+				FirstValid = txParams.LastRound,
+				LastValid = txParams.LastRound + 1000
+			};
+		}
 
 	}
 

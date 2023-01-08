@@ -1,5 +1,6 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
+using Algorand.Utils;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -43,18 +44,18 @@ namespace Yieldly.VerboseLotteryDepositExample {
 				for (var i = 0; i < lotteryDepositTxGroup.Transactions.Length; i++) {
 					var tx = lotteryDepositTxGroup.Transactions[i];
 
-					if (tx.sender.Equals(account.Address)) {
+					if (tx.Sender.Equals(account.Address)) {
 
 						// Inspect transaction
 
 						// Sign transaction
-						lotteryDepositTxGroup.SignedTransactions[i] = account.SignTransaction(tx);
+						lotteryDepositTxGroup.SignedTransactions[i] = tx.Sign(account);
 					}
 				}
 
 				var lotteryDepositResult = await client.SubmitAsync(lotteryDepositTxGroup);
 
-				Console.WriteLine($"Lottery deposit complete, transaction ID: {lotteryDepositResult.TxId}");
+				Console.WriteLine($"Lottery deposit complete, transaction ID: {lotteryDepositResult.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

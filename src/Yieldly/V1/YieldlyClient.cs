@@ -1,8 +1,7 @@
 ﻿using Algorand;
 using Algorand.Common;
-using Algorand.V2;
-using Algorand.V2.Algod;
-using Algorand.V2.Algod.Model;
+using Algorand.Algod;
+using Algorand.Algod.Model;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
 using System.Collections.Concurrent;
@@ -10,7 +9,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Yieldly.V1.Model;
-using Account = Algorand.Account;
 
 namespace Yieldly.V1 {
 
@@ -73,7 +71,7 @@ namespace Yieldly.V1 {
 		/// <returns>Current network parameters</returns>
 		public virtual async Task<TransactionParametersResponse> FetchTransactionParamsAsync() {
 
-			return await mDefaultApi.ParamsAsync();
+			return await mDefaultApi.TransactionParamsAsync();
 		}
 
 		/// <summary>
@@ -111,9 +109,9 @@ namespace Yieldly.V1 {
 		/// <returns>Application amounts</returns>
 		public virtual async Task<FetchAmountsResult> FetchAmountsAsync(Address address) {
 
-			var accountInfo = await mDefaultApi.AccountsAsync(address.EncodeAsString(), Format.Json);
-			var lotteryApp = await mDefaultApi.ApplicationsAsync((int)Constant.LotteryAppId);
-			var stakingApp = await mDefaultApi.ApplicationsAsync((int)Constant.StakingAppId);
+			var accountInfo = await mDefaultApi.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
+			var lotteryApp = await mDefaultApi.GetApplicationByIDAsync((int)Constant.LotteryAppId);
+			var stakingApp = await mDefaultApi.GetApplicationByIDAsync((int)Constant.StakingAppId);
 
 			var lotteryReward = YieldlyEquation.CalculateLotteryClaimableAmount(accountInfo, lotteryApp);
 			var stakingReward = YieldlyEquation.CalculateStakingClaimableAmount(accountInfo, stakingApp);
@@ -144,7 +142,7 @@ namespace Yieldly.V1 {
 		/// <returns>Stake pool</returns>
 		public virtual async Task<AsaStakingPool> FetchStakingPoolAsync(ulong appId) {
 
-			var application = await mDefaultApi.ApplicationsAsync(appId);
+			var application = await mDefaultApi.GetApplicationByIDAsync(appId);
 
 			if (!String.IsNullOrWhiteSpace(ApplicationState.GetBytes(application.Params.GlobalState, "E"))) {
 				return await CreateTeal3StakingPool(application);
@@ -270,7 +268,7 @@ namespace Yieldly.V1 {
 
 			if (checkAssetBalance) {
 				var accountInfo = await mDefaultApi
-					.AccountsAsync(account.Address.EncodeAsString(), Format.Json);
+					.AccountInformationAsync(account.Address.EncodeAsString(), null, Format.Json);
 
 				var assetInfo = accountInfo.Assets
 					.FirstOrDefault(s => s.AssetId == yieldlyAssetId);
@@ -420,7 +418,7 @@ namespace Yieldly.V1 {
 			bool includeLotteryContract = true,
 			bool includeYieldlyAsa = true) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareOptInTransactions(
@@ -450,7 +448,7 @@ namespace Yieldly.V1 {
 			bool includeLotteryContract = true,
 			bool includeYieldlyAsa = true) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 			var asset = await FetchAssetAsync(Constant.YieldlyAssetId);
 
 			var closeTo = new Address(asset.Creator);
@@ -478,7 +476,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong algoAmount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryDepositTransactions(algoAmount, sender, txParams);
@@ -496,7 +494,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong algoAmount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryWithdrawTransactions(algoAmount, sender, txParams);
@@ -514,7 +512,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			LotteryRewardAmount amount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareLotteryClaimRewardTransactions(
@@ -533,7 +531,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong yieldlyAmount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingDepositTransactions(yieldlyAmount, sender, txParams);
@@ -551,7 +549,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong yieldlyAmount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingWithdrawTransactions(yieldlyAmount, sender, txParams);
@@ -569,7 +567,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			StakingRewardAmount amount) {
 
-			var txParams = await mDefaultApi.ParamsAsync();
+			var txParams = await mDefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareYieldlyStakingClaimRewardTransactions(
@@ -590,14 +588,14 @@ namespace Yieldly.V1 {
 				};
 			}
 
-			var asset = await DefaultApi.AssetsAsync(id);
+			var asset = await DefaultApi.GetAssetByIDAsync(id);
 
 			return new SimpleAsset {
 				Id = id,
 				Name = asset.Params.Name,
 				UnitName = asset.Params.UnitName,
 				Decimals = (int)asset.Params.Decimals,
-				Creator = asset.Params.Creator
+				Creator = asset.Params.Creator.EncodeAsString()
 			};
 		}
 

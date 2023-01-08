@@ -1,13 +1,11 @@
 ﻿using Algorand;
 using Algorand.Common;
-using Algorand.V2.Algod.Model;
+using Algorand.Algod.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Yieldly.V1.Model;
-using Account = Algorand.Account;
-using AccountModel = Algorand.V2.Algod.Model.Account;
 
 namespace Yieldly.V1 {
 
@@ -49,7 +47,7 @@ namespace Yieldly.V1 {
 		/// </summary>
 		public async Task RefreshAsync() {
 
-			Application = await Client.DefaultApi.ApplicationsAsync(ApplicationId);
+			Application = await Client.DefaultApi.GetApplicationByIDAsync(ApplicationId);
 		}
 
 		/// <summary>
@@ -60,7 +58,7 @@ namespace Yieldly.V1 {
 		public virtual async Task<bool> IsOptedInAsync(Address address) {
 
 			var info = await Client.DefaultApi
-				.AccountsAsync(address.EncodeAsString(), Format.Json);
+				.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
 			var appId = ApplicationId;
 
 			foreach (var entry in info.AppsLocalState) {
@@ -81,7 +79,7 @@ namespace Yieldly.V1 {
 		public virtual async Task<bool> IsOptedInToStakeAssetAsync(Address address) {
 
 			var info = await Client.DefaultApi
-				.AccountsAsync(address.EncodeAsString(), Format.Json);
+				.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
 
 			return AccountIsOptedInToAsset(info, StakeAsset.Id);
 		}
@@ -94,13 +92,13 @@ namespace Yieldly.V1 {
 		public virtual async Task<bool> IsOptedInToRewardAssetAsync(Address address) {
 			
 			var info = await Client.DefaultApi
-				.AccountsAsync(address.EncodeAsString(), Format.Json);
+				.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
 
 			return AccountIsOptedInToAsset(info, RewardAsset.Id);
 		}
 
 		protected virtual bool AccountIsOptedInToAsset(
-			AccountModel accountInfo, ulong assetId) {
+			Account accountInfo, ulong assetId) {
 
 			return accountInfo
 				.Assets
@@ -117,7 +115,7 @@ namespace Yieldly.V1 {
 			Address address, bool refreshPoolInfo = false) {
 
 			var info = await Client.DefaultApi
-				.AccountsAsync(address.EncodeAsString(), Format.Json);
+				.AccountInformationAsync(address.EncodeAsString(), null, Format.Json);
 
 			if (refreshPoolInfo) {
 				await RefreshAsync();
@@ -157,8 +155,8 @@ namespace Yieldly.V1 {
 
 			var results = new List<PostTransactionsResponse>();
 
-			AccountModel accountInfo = (optInToStakeAsset || optInToRewardAsset)
-				? await Client.DefaultApi.AccountsAsync(account.Address.EncodeAsString(), Format.Json)
+			Account accountInfo = (optInToStakeAsset || optInToRewardAsset)
+				? await Client.DefaultApi.AccountInformationAsync(account.Address.EncodeAsString(), null, Format.Json)
 				: null;
 
 			// If neccessary, opt-in to stake asset
@@ -213,7 +211,7 @@ namespace Yieldly.V1 {
 
 			if (checkRewardAssetBalance) {
 				var accountInfo = await Client.DefaultApi
-					.AccountsAsync(account.Address.EncodeAsString(), Format.Json);
+					.AccountInformationAsync(account.Address.EncodeAsString(), null, Format.Json);
 
 				var assetInfo = accountInfo.Assets
 					.FirstOrDefault(s => s.AssetId == rewardAssetId);
@@ -298,7 +296,7 @@ namespace Yieldly.V1 {
 		/// <returns>Transaction group</returns>
 		public virtual async Task<TransactionGroup> PrepareOptInTransactionsAsync(Address sender) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolOptInTransactions(ApplicationId, sender, txParams);
@@ -313,7 +311,7 @@ namespace Yieldly.V1 {
 		/// <returns>Transaction group</returns>
 		public virtual async Task<TransactionGroup> PrepareStakeAssetOptInTransactionsAsync(Address sender) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAssetOptInTransactions(StakeAsset.Id, sender, txParams);
@@ -328,7 +326,7 @@ namespace Yieldly.V1 {
 		/// <returns>Transaction group</returns>
 		public virtual async Task<TransactionGroup> PrepareRewardAssetOptInTransactionsAsync(Address sender) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAssetOptInTransactions(RewardAsset.Id, sender, txParams);
@@ -345,12 +343,12 @@ namespace Yieldly.V1 {
 		public virtual async Task<TransactionGroup> PrepareOptOutTransactionsAsync(
 			Address sender, bool optOutOfRewardAsset = false) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			if (optOutOfRewardAsset) {
 				var assetId = RewardAsset.Id;
-				var asset = await Client.DefaultApi.AssetsAsync(assetId);
-				var closeTo = new Address(asset.Params.Creator);
+				var asset = await Client.DefaultApi.GetAssetByIDAsync(assetId);
+				var closeTo = asset.Params.Creator;
 
 				return YieldlyTransaction.PrepareAsaStakingPoolOptOutTransactions(
 					ApplicationId, assetId, closeTo, sender, txParams);
@@ -370,7 +368,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong stakeAmount) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolDepositTransactions(stakeAmount, this, sender, txParams);
@@ -388,7 +386,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong withdrawAmount) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolWithdrawTransactions(withdrawAmount, this, sender, txParams);
@@ -406,7 +404,7 @@ namespace Yieldly.V1 {
 			Address sender,
 			ulong rewardAmount) {
 
-			var txParams = await Client.DefaultApi.ParamsAsync();
+			var txParams = await Client.DefaultApi.TransactionParamsAsync();
 
 			var result = YieldlyTransaction
 				.PrepareAsaStakingPoolClaimRewardTransactions(

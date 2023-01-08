@@ -1,5 +1,6 @@
 ﻿using Algorand;
-using Algorand.V2;
+using Algorand.Algod.Model;
+using Algorand.Utils;
 using System;
 using System.Configuration;
 using System.Threading.Tasks;
@@ -34,7 +35,7 @@ namespace Yieldly.LotteryDepositExample {
 			try {
 				var result = await client.LotteryDepositAsync(account, amountToDeposit);
 
-				Console.WriteLine($"Lottery deposit complete, transaction ID: {result.TxId}");
+				Console.WriteLine($"Lottery deposit complete, transaction ID: {result.Txid}");
 
 			} catch (Exception ex) {
 				Console.WriteLine($"An error occured: {ex.Message}");

@@ -1,7 +1,8 @@
-﻿using Algorand.V2.Algod.Model;
+﻿using Algorand.Algod.Model;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Yieldly.V1.Model;
 
@@ -45,56 +46,56 @@ namespace Yieldly.V1 {
 			};
 		}
 		
-		public static ulong? GetGlobalTimeValue(this TealKeyValueStore values) {
+		public static ulong? GetGlobalTimeValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, GlobalTimeKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetGlobalStakingSharesValue(this TealKeyValueStore values) {
+		public static ulong? GetGlobalStakingSharesValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, GlobalStakingSharesKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetTotalClaimableYieldlyValue(this TealKeyValueStore values) {
+		public static ulong? GetTotalClaimableYieldlyValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableYieldlyKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetTotalClaimableAlgoValue(this TealKeyValueStore values) {
+		public static ulong? GetTotalClaimableAlgoValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAlgoKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetTotalClaimableAsaValue(this TealKeyValueStore values) {
+		public static ulong? GetTotalClaimableAsaValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, TotalClaimableAsaKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetUserStakingShareValue(this TealKeyValueStore values) {
+		public static ulong? GetUserStakingShareValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, UserStakingSharesKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetUserAmountValue(this TealKeyValueStore values) {
+		public static ulong? GetUserAmountValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, UserAmountKey, mCmp))?
 				.Value?
 				.Uint;
 		}
 
-		public static ulong? GetUserTimeValue(this TealKeyValueStore values) {
+		public static ulong? GetUserTimeValue(this ICollection<TealKeyValue> values) {
 			return values
 				.FirstOrDefault(s => String.Equals(s.Key, UserTimeKey, mCmp))?
 				.Value?

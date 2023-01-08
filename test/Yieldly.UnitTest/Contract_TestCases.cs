@@ -22,7 +22,7 @@ namespace Yieldly.UnitTest {
 
 			var appId = Constant.OpulousStakingAppId;
 			var lsig = Contract.GetAsaStakePoolLogicsigSignature(appId);
-			var logicAsBase64 = Strings.FromUtf8ByteArray(Base64.Encode(lsig.logic));
+			var logicAsBase64 = Strings.FromUtf8ByteArray(Base64.Encode(lsig.Logic));
 
 			Assert.IsTrue(String.Equals(
 				lsig.Address.EncodeAsString(), "VUY44SYOFFJE3ZIDEMA6PT34J3FAZUAE6VVTOTUJ5LZ343V6WZ3ZJQTCD4", mCmp));
@@ -36,7 +36,7 @@ namespace Yieldly.UnitTest {
 
 			var appId = Constant.SmileCoinStakingAppId;
 			var lsig = Contract.GetAsaStakePoolLogicsigSignature(appId);
-			var logicAsBase64 = Strings.FromUtf8ByteArray(Base64.Encode(lsig.logic));
+			var logicAsBase64 = Strings.FromUtf8ByteArray(Base64.Encode(lsig.Logic));
 
 			Assert.IsTrue(String.Equals(
 				lsig.Address.EncodeAsString(), "KDZS6OV5PAARFJPRZYRRQWCZOCPICB6NJ4YNHZKNCNKIVOLSL5ZCPMY24I", mCmp));
